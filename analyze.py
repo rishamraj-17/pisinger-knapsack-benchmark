@@ -7,8 +7,8 @@ Reads the experimental CSV produced by BenchmarkRunner and generates:
   - Publication-quality figures in PDF, PNG, and SVG (figures/*)
   - A CSV summary of all results (tables/table_full_summary.csv)
 
-Uses only the Python standard library (no pip dependencies).
-The figure generation (figures.py) additionally requires numpy and matplotlib.
+Table generation uses only the Python standard library.
+Figure generation (figures.py) requires numpy and matplotlib.
 
 Usage:
   python3 analyze.py [path/to/full_experiment.csv]
@@ -45,6 +45,8 @@ algorithms = ['Greedy', 'DynamicProgramming', 'BranchAndBound']
 
 os.makedirs(FIGURES_DIR, exist_ok=True)
 os.makedirs(TABLES_DIR, exist_ok=True)
+
+random.seed(42)
 
 # ─── Statistical Helpers ────────────────────────────────────────
 def bootstrap_ci(data, n_bootstrap=10000, confidence=0.95, statistic=statistics.mean):

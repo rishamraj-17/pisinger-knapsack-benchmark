@@ -10,12 +10,15 @@ Requires: numpy, matplotlib.
 """
 
 import os
+import random
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 from matplotlib.ticker import FixedLocator, MaxNLocator
 import numpy as np
+
+random.seed(42)
 
 
 # ─── Color Schemes (Okabe-Ito / Wong - Colorblind Safe) ────────────────

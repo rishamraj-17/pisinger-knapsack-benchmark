@@ -124,7 +124,7 @@ The research paper is at `paper/draft.md`. LaTeX tables in `tables/` are designe
 
 - **Greedy is provably optimal** on Inverse Correlated instances (where `v + w = constant`) and achieves <1% median gap on Uncorrelated/Weakly Correlated instances.
 - **DP runtime is nearly independent** of instance family, scaling linearly with n at fixed capacity.
-- **B&B search effort** varies dramatically by family: fast on Uncorrelated/Weakly Correlated, but exponential blowup on Inverse Correlated (median 53K nodes at n=500, max 25M).
+- **B&B search effort** varies dramatically by family: fast on Uncorrelated/Weakly Correlated, but exponential blowup on Inverse Correlated (median 46K nodes at n=500, max 25M).
 
 ## Citation
 
