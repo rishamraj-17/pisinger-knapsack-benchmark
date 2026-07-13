@@ -1,0 +1,14 @@
+\begin{table}[tb]
+\centering
+\caption{Mean execution time (ms) at $n=500$ ($W=1000$, 30 seeds) with 95\% bootstrap CI}
+\label{tab:time-n500}
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & Uncorr. & WeakCorr. & StrongCorr. & InverseCorr. & EqualRatios \\
+\midrule
+Greedy & 0.28 (CI: 0.27–0.29) & 0.33 (CI: 0.31–0.34) & 0.22 (CI: 0.20–0.24) & 0.16 (CI: 0.13–0.19) & 0.10 (CI: 0.09–0.10) \\
+DynamicProgramming & 0.41 (CI: 0.37–0.45) & 0.38 (CI: 0.33–0.43) & 0.44 (CI: 0.37–0.53) & 0.44 (CI: 0.40–0.48) & 0.41 (CI: 0.38–0.44) \\
+BranchAndBound & 0.12 (CI: 0.11–0.13) & 0.16 (CI: 0.14–0.19) & 0.73 (CI: 0.42–1.10) & 182.60 (CI: 8.96–517.88) & 0.31 (CI: 0.22–0.42) \\
+\bottomrule
+\end{tabular}
+\end{table}

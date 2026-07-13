@@ -1,0 +1,117 @@
+package algorithms;
+
+import model.Item;
+import model.KnapsackInstance;
+import model.Result;
+
+import java.util.Comparator;
+import java.util.PriorityQueue;
+
+public final class BranchAndBound implements Algorithm {
+    private static class Node implements Comparable<Node> {
+        final int level;
+        final int value;
+        final int weight;
+        final double bound;
+
+        Node(int level, int value, int weight, double bound) {
+            this.level = level;
+            this.value = value;
+            this.weight = weight;
+            this.bound = bound;
+        }
+
+        @Override
+        public int compareTo(Node other) {
+            return Double.compare(other.bound, this.bound);
+        }
+    }
+
+    @Override
+    public String getName() {
+        return "BranchAndBound";
+    }
+
+    @Override
+    public Result solve(KnapsackInstance instance) {
+        long startMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        long startTime = System.nanoTime();
+
+        Item[] items = instance.getItems();
+        int n = instance.getN();
+        int capacity = instance.getCapacity();
+
+        Item[] sorted = items.clone();
+        java.util.Arrays.sort(sorted, Comparator.comparingDouble(Item::getRatio).reversed());
+
+        PriorityQueue<Node> pq = new PriorityQueue<>();
+        double rootBound = fractionalBound(0, 0, 0, sorted, capacity, n);
+        pq.add(new Node(0, 0, 0, rootBound));
+
+        int bestValue = 0;
+        long nodesExplored = 0;
+
+        while (!pq.isEmpty()) {
+            Node node = pq.poll();
+            nodesExplored++;
+
+            if (node.bound <= bestValue) continue;
+            if (node.level >= n) continue;
+
+            int nextLevel = node.level + 1;
+            Item nextItem = sorted[node.level];
+
+            int includeWeight = node.weight + nextItem.getWeight();
+            int includeValue = node.value + nextItem.getValue();
+            if (includeWeight <= capacity && includeValue > bestValue) {
+                bestValue = includeValue;
+            }
+            if (includeWeight <= capacity) {
+                double bound = fractionalBound(nextLevel, includeValue, includeWeight, sorted, capacity, n);
+                if (bound > bestValue) {
+                    pq.add(new Node(nextLevel, includeValue, includeWeight, bound));
+                }
+            }
+
+            double excludeBound = fractionalBound(nextLevel, node.value, node.weight, sorted, capacity, n);
+            if (excludeBound > bestValue) {
+                pq.add(new Node(nextLevel, node.value, node.weight, excludeBound));
+            }
+        }
+
+        long timeNanos = System.nanoTime() - startTime;
+        long endMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        long memUsed = Math.max(0, endMem - startMem);
+
+        return Result.builder()
+                .algorithm(getName())
+                .datasetType(instance.getFamilyName())
+                .n(instance.getN())
+                .capacity(instance.getCapacity())
+                .instanceId(instance.getId())
+                .seed(instance.getId())
+                .timeNanos(timeNanos)
+                .memoryBytes(memUsed)
+                .solutionValue(bestValue)
+                .optimalValue(bestValue)
+                .nodesExplored(nodesExplored)
+                .optimal(true)
+                .build();
+    }
+
+    private static double fractionalBound(int level, int value, int weight, Item[] items, int capacity, int n) {
+        if (weight >= capacity) return value;
+        double bound = value;
+        int w = weight;
+        for (int i = level; i < n; i++) {
+            if (w + items[i].getWeight() <= capacity) {
+                w += items[i].getWeight();
+                bound += items[i].getValue();
+            } else {
+                bound += (capacity - w) * items[i].getRatio();
+                break;
+            }
+        }
+        return bound;
+    }
+}
