@@ -1,7 +1,11 @@
 #!/bin/bash
-# Build and run script for Knapsack Empirical Comparison
-# Usage: ./build_and_run.sh [n-values] [capacity] [instances-per-config] [seed]
-# Example: ./build_and_run.sh 20,50,100,200,500 1000 30 42
+# Build and run the knapsack benchmark experiment.
+#
+# Usage:
+#   ./build_and_run.sh [n-values] [capacity] [instances-per-config] [seed]
+#
+# Defaults: n={20,50,100,200,500}, capacity=1000, instances=30, seed=42
+# Example:  ./build_and_run.sh 20,50,100,200,500 1000 30 42
 
 set -e
 
@@ -10,7 +14,7 @@ LIB_DIR="lib"
 OUT_DIR="out"
 JAR_NAME="knapsack.jar"
 
-mkdir -p "$LIB_DIR" "$OUT_DIR" "results"
+mkdir -p "$LIB_DIR" "$OUT_DIR/results"
 
 # Download dependency if needed
 if [ ! -f "$LIB_DIR/commons-csv-1.10.0.jar" ]; then
@@ -28,4 +32,4 @@ cd "$OUT_DIR"
 java -cp ".:../$LIB_DIR/commons-csv-1.10.0.jar" Main "$@"
 
 echo ""
-echo "Experiment complete. Results in results/full_experiment.csv"
+echo "Done. Results in out/results/full_experiment.csv"

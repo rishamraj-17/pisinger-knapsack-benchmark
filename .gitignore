@@ -1,0 +1,21 @@
+# Java build output
+target/
+out/algorithms/
+out/benchmark/
+out/dataset/
+out/model/
+out/*.class
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# IDE
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Keep canonical experimental data
+!out/results/

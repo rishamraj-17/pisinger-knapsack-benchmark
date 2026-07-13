@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+title: "Knapsack Optimization: An Experimental Study of Classical Algorithms Under Different Problem Characteristics"
+type: software
+authors:
+  - family-names: ""
+    given-names: ""
+message: "If you use this software, please cite it using the metadata from this file."
+repository-code: ""
+license: MIT

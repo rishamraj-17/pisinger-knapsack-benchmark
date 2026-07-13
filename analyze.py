@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 """
-Canonical analysis pipeline for Knapsack Empirical Comparison - stdlib only.
+Canonical analysis pipeline for the Knapsack Empirical Comparison.
 
-Pipeline:
-  1. Run Main.java -> generates out/results/full_experiment.csv
-  2. Run this script -> generates figures/ and tables/
-  3. Use tables/*.tex and figures/*.pdf in paper
+Reads the experimental CSV produced by BenchmarkRunner and generates:
+  - LaTeX tables with 95% bootstrap confidence intervals (tables/*.tex)
+  - Publication-quality figures in PDF, PNG, and SVG (figures/*)
+  - A CSV summary of all results (tables/table_full_summary.csv)
+
+Uses only the Python standard library (no pip dependencies).
+The figure generation (figures.py) additionally requires numpy and matplotlib.
 
 Usage:
-  python3 analyze.py [out/results/full_experiment.csv]
+  python3 analyze.py [path/to/full_experiment.csv]
+
+If no path is given, reads out/results/full_experiment.csv.
 """
 
 import csv

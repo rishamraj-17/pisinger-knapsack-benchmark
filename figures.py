@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
 """
-Publication-quality figure generation for Knapsack Empirical Comparison.
+Publication-quality figure generation for the Knapsack Empirical Comparison.
 
-6 figures meeting IEEE/Springer/INFORMS/ACM standards:
-- Linear scales with broken axes & inset zooms
-- Consistent typography, colors, spacing
-- 600 DPI PNG + vector PDF/SVG
+Generates six figures in PDF, PNG (600 DPI), and SVG:
+  1. Runtime vs problem size (three-panel, one per algorithm)
+  2. Greedy optimality gap boxplot by instance family
+  3. Branch & Bound nodes explored (broken Y-axis for outliers)
+  4. Branch & Bound runtime distribution at n=500 (broken Y-axis)
+  5. Runtime comparison at n=500 (split panel for Inverse Correlated)
+  6. Dynamic Programming runtime scaling with confidence intervals
+
+Color scheme: Okabe-Ito (colorblind-safe).
+All typography and spacing follow IEEE/Springer publication standards.
+
+Requires: numpy, matplotlib.
 """
 
 import os

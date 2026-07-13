@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-Publication-quality plotting utilities for Knapsack Empirical Comparison.
+Shared plotting utilities for the Knapsack Empirical Comparison.
 
-Generates figures meeting IEEE/Springer/INFORMS/ACM standards:
-- Linear scales with broken axes & inset zooms for outliers
-- Consistent typography, colors, and styling
-- 600 DPI PNG, vector PDF/SVG exports
+Provides consistent styling constants, axis configuration helpers, broken Y-axis
+support, inset zoom, boxplot styling, and bootstrap CI computation. Used by
+figures.py to ensure all figures share identical visual language.
+
+Requires: numpy, matplotlib.
 """
 
 import os

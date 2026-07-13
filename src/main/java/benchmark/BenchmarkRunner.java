@@ -15,19 +15,23 @@ import java.util.concurrent.Future;
 public final class BenchmarkRunner {
     private final DatasetGenerator datasetGenerator;
     private final AlgorithmFactory[] algorithmFactories;
-    private final int warmupRuns;
+    private final int perInstanceWarmupRuns;
     private final int timeoutSeconds;
 
-    public BenchmarkRunner(DatasetGenerator datasetGenerator, AlgorithmFactory[] algorithmFactories, int warmupRuns, int timeoutSeconds) {
+    public BenchmarkRunner(DatasetGenerator datasetGenerator, AlgorithmFactory[] algorithmFactories, int perInstanceWarmupRuns, int timeoutSeconds) {
         this.datasetGenerator = datasetGenerator;
         this.algorithmFactories = algorithmFactories;
-        this.warmupRuns = warmupRuns;
+        this.perInstanceWarmupRuns = perInstanceWarmupRuns;
         this.timeoutSeconds = timeoutSeconds;
     }
 
     public List<Result> run() {
         List<KnapsackInstance> instances = datasetGenerator.generate();
         System.out.println("Generated " + instances.size() + " instances");
+
+        // Global JIT warmup: run each algorithm on representative instances
+        // to ensure JIT compilation reaches steady state before timed runs
+        warmupJit(instances);
 
         List<Result> allResults = new ArrayList<>();
 
@@ -36,7 +40,7 @@ public final class BenchmarkRunner {
             System.out.println("Running " + algo.getName() + "...");
 
             for (KnapsackInstance instance : instances) {
-                for (int w = 0; w < warmupRuns; w++) {
+                for (int w = 0; w < perInstanceWarmupRuns; w++) {
                     algo.solve(instance);
                 }
 
@@ -46,6 +50,40 @@ public final class BenchmarkRunner {
         }
 
         return allResults;
+    }
+
+    private void warmupJit(List<KnapsackInstance> instances) {
+        System.out.println("Performing global JIT warmup...");
+        
+        // Group instances by algorithm-relevant characteristics
+        // For warmup, we just need to exercise the hot paths with varying data sizes
+        for (AlgorithmFactory factory : algorithmFactories) {
+            Algorithm algo = factory.create();
+            
+            // Warm up with a few instances of each size to trigger JIT compilation
+            // Use first instance of each (n, family) combination
+            java.util.Set<String> seen = new java.util.HashSet<>();
+            int warmupCount = 0;
+            
+            for (KnapsackInstance instance : instances) {
+                String key = instance.getN() + ":" + instance.getFamilyName();
+                if (seen.add(key)) {
+                    // Run many iterations to ensure JIT reaches C2 compilation
+                    // Greedy is very fast, so we need many iterations
+                    int iterations = 10000;
+                    long startNanos = System.nanoTime();
+                    for (int i = 0; i < iterations; i++) {
+                        algo.solve(instance);
+                    }
+                    long elapsedMs = (System.nanoTime() - startNanos) / 1_000_000;
+                    warmupCount++;
+                    // Only need a few distinct (n, family) combos per algorithm
+                    if (warmupCount >= 10) break;
+                }
+            }
+            System.out.println("  Warmed up " + algo.getName() + " (" + warmupCount + " instance types)");
+        }
+        System.out.println("Global JIT warmup complete");
     }
 
     private Result runWithTimeout(Algorithm algo, KnapsackInstance instance) {

@@ -1,6 +1,6 @@
 # Knapsack Optimization: An Experimental Study of Classical Algorithms Under Different Problem Characteristics
 
-**Abstract** — We present a systematic empirical comparison of three classical 0/1 knapsack algorithms—Greedy, Dynamic Programming (DP), and Branch & Bound (B&B)—across five distinct instance families. Our study reveals that instance correlation structure significantly affects practical performance, but not always in the ways previously assumed: Greedy achieves optimal solutions (0% gap) on Inverse Correlated instances and small gaps (< 1% median) on Uncorrelated and Weakly Correlated instances, while showing moderate gaps (2.5% median) on Strongly Correlated instances. DP scales near-linearly with capacity regardless of structure. B&B explores the fewest nodes on Uncorrelated and Weakly Correlated instances but suffers exponential blowup on Strongly Correlated and Inverse Correlated families at larger sizes. These results provide practical guidance for algorithm selection based on observable instance properties.
+**Abstract** — We present a systematic empirical comparison of three classical 0/1 knapsack algorithms—Greedy, Dynamic Programming (DP), and Branch & Bound (B&B)—across five distinct instance families. Our study reveals that instance correlation structure significantly affects practical performance, but not always in the ways previously assumed: Greedy achieves optimal solutions (0% gap) on Inverse Correlated instances and small gaps (< 1% median) on Uncorrelated and Weakly Correlated instances, while showing moderate gaps (2.5% median) on Strongly Correlated instances. DP runtime scales linearly with n at fixed capacity and is largely insensitive to instance structure. B&B explores the fewest nodes on Uncorrelated and Weakly Correlated instances but suffers exponential blowup on Strongly Correlated and Inverse Correlated families at larger sizes. These results provide practical guidance for algorithm selection based on observable instance properties.
 
 **Keywords** — knapsack problem, empirical algorithmics, greedy algorithms, dynamic programming, branch and bound, experimental analysis
 
@@ -83,15 +83,15 @@ Parameters: $n \in \{20, 50, 100, 200, 500\}$, $W = 1000$, 30 seeds per $(n, \te
 | Algorithm | Uncorrelated | Weakly Corr. | Strongly Corr. | Inverse Corr. | Equal Ratios |
 |-----------|-------------|--------------|----------------|---------------|--------------|
 | Greedy | 0.28 (CI: 0.27–0.29) | 0.33 (CI: 0.31–0.34) | 0.22 (CI: 0.20–0.24) | 0.16 (CI: 0.13–0.19) | 0.10 (CI: 0.09–0.10) |
-| DP | 0.41 (CI: 0.37–0.45) | 0.38 (CI: 0.33–0.43) | 0.44 (CI: 0.37–0.53) | 0.44 (CI: 0.40–0.48) | 0.41 (CI: 0.38–0.44) |
-| B&B | 0.12 (CI: 0.11–0.14) | 0.16 (CI: 0.14–0.19) | 0.73 (CI: 0.43–1.09) | 182.60 (CI: 8.94–518.92) | 0.31 (CI: 0.22–0.42) |
+| DP | 0.41 (CI: 0.37–0.45) | 0.38 (CI: 0.34–0.43) | 0.44 (CI: 0.38–0.53) | 0.44 (CI: 0.40–0.48) | 0.41 (CI: 0.38–0.44) |
+| B&B | 0.12 (CI: 0.11–0.14) | 0.16 (CI: 0.14–0.19) | 0.73 (CI: 0.42–1.09) | 182.60 (CI: 9.04–518.20) | 0.31 (CI: 0.21–0.42) |
 
 **Key observations**:
-- Greedy: Consistently sub-millisecond (0.10–0.33 ms), O(n log n) scaling; varies by family (3.3× range at n=500)
-- DP: Scales near-linearly with n at fixed W=1000; modest family dependence (~1.15× range at n=500, 0.38–0.44 ms)
-- B&B: Fast on Uncorrelated/Weakly Correlated/Equal Ratios (< 0.3 ms median); **extreme variance on Inverse Correlated** (median 4.67 ms, mean 182.6 ms) due to 30s timeout censoring several runs (max 4974 ms, 25M nodes)
+- Greedy: Sub-millisecond across all families (0.10–0.33 ms), with a 3.3x range reflecting family-dependent sorting behavior.
+- DP: Near-linear scaling with n at fixed W=1000; family dependence is modest (0.38–0.44 ms at n=500).
+- B&B: Fast on Uncorrelated/Weakly Correlated/Equal Ratios (< 0.31 ms); **extreme variance on Inverse Correlated** (median 4.67 ms, mean 182.60 ms) due to several runs hitting the 30s timeout (max 4974 ms, 25M nodes explored).
 
-**Figure 1** (time vs n): All algorithms scale near-linearly with n at fixed W. DP time shows modest family dependence. B&B variance is highest on Inverse Correlated (std 905.65 ms vs 0.97 ms for Strongly Correlated at n=500).
+**Figure 1** (time vs n): All algorithms scale near-linearly with n at fixed W. B&B variance is highest on Inverse Correlated (std 905.65 ms vs 0.97 ms for Strongly Correlated at n=500), with the distribution heavily right-skewed by timeout-censored runs.
 
 ### 5.2 Optimality Gap (Greedy)
 
@@ -137,15 +137,15 @@ Parameters: $n \in \{20, 50, 100, 200, 500\}$, $W = 1000$, 30 seeds per $(n, \te
 
 | n | Uncorrelated | Weakly Corr. | Strongly Corr. | Inverse Corr. | Equal Ratios |
 |---|-------------|--------------|----------------|---------------|--------------|
-| 20 | 29 | 102 | 340 | 39 | 104 |
-| 50 | 69 | 110 | 913 | 290 | 249 |
-| 100 | 140 | 276 | 1,234 | 727 | 395 |
-| 200 | 248 | 559 | 2,521 | 6,050 | 521 |
-| 500 | 584 | 821 | 3,402 | **53,276** | 990 |
+| 20 | 28 | 94 | 320 | 38 | 102 |
+| 50 | 69 | 108 | 903 | 262 | 248 |
+| 100 | 140 | 252 | 1,169 | 644 | 393 |
+| 200 | 248 | 520 | 2,256 | 4,318 | 503 |
+| 500 | 582 | 800 | 3,228 | **46,244** | 984 |
 
 **Findings**:
 - **Strongly Correlated**: Many nodes despite tight bounds; fractional bound is loose when $v_i \approx w_i$ because many items fit fractionally.
-- **Inverse Correlated**: Explores the **most nodes at n=500** (median 53,276), not the fewest. Extreme outlier (25M nodes) causes high mean time.
+- **Inverse Correlated**: Explores the **most nodes at n=500** (median 46,244), not the fewest. Extreme outlier (25M nodes) causes high mean time.
 - **Equal Ratios**: Moderate effort; identical ratios create many equivalent bound values.
 
 ### 5.4 B&B Runtime at n=500 with Outlier Analysis
@@ -157,10 +157,10 @@ Parameters: $n \in \{20, 50, 100, 200, 500\}$, $W = 1000$, 30 seeds per $(n, \te
 | Uncorrelated | 0.12 (CI: 0.11–0.14) | 0.12 ± 0.03 | 0.11–0.14 | 0.20 |
 | Weakly Correlated | 0.14 (CI: 0.13–0.16) | 0.16 ± 0.07 | 0.14–0.19 | 0.37 |
 | Strongly Correlated | 0.36 (CI: 0.23–0.59) | 0.73 ± 0.97 | 0.43–1.08 | 3.85 |
-| Inverse Correlated | 4.67 (CI: 0.93–10.63) | 182.60 ± 905.65 | 9.35–519.70 | 4974.48 |
-| Equal Ratios | 0.18 (CI: 0.15–0.29) | 0.31 ± 0.29 | 0.22–0.42 | 1.25 |
+| Inverse Correlated | 4.67 (CI: 0.93–10.63) | 182.60 ± 905.65 | 8.87–517.75 | 4974.48 |
+| Equal Ratios | 0.18 (CI: 0.15–0.29) | 0.31 ± 0.29 | 0.21–0.42 | 1.25 |
 
-The Inverse Correlated mean is heavily inflated by 30-second timeout censoring (several runs hit timeout). The median (4.67 ms) and median CI better represent typical performance. Maximum observed time was 4974 ms (25.2M nodes).
+The Inverse Correlated mean (182.60 ms) is heavily inflated by 30-second timeout censoring. The median (4.67 ms) and median CI better represent typical performance. Maximum observed time was 4974 ms (25.2M nodes).
 
 ### 5.5 DP Scaling
 
@@ -170,11 +170,11 @@ The Inverse Correlated mean is heavily inflated by 30-second timeout censoring (
 |---|-------------|--------------|----------------|---------------|--------------|
 | 20 | 0.09 (CI: 0.07–0.11) | 0.12 (CI: 0.06–0.23) | 0.03 (CI: 0.02–0.04) | 0.01 (CI: 0.01–0.01) | 0.01 (CI: 0.01–0.02) |
 | 50 | 0.07 (CI: 0.06–0.08) | 0.06 (CI: 0.05–0.06) | 0.07 (CI: 0.07–0.08) | 0.10 (CI: 0.05–0.18) | 0.07 (CI: 0.06–0.07) |
-| 100 | 0.11 (CI: 0.10–0.12) | 0.14 (CI: 0.13–0.14) | 0.14 (CI: 0.13–0.14) | 0.09 (CI: 0.07–0.10) | 0.12 (CI: 0.11–0.13) |
-| 200 | 0.24 (CI: 0.20–0.32) | 0.20 (CI: 0.18–0.22) | 0.25 (CI: 0.23–0.27) | 0.21 (CI: 0.19–0.23) | 0.25 (CI: 0.23–0.27) |
-| 500 | 0.41 (CI: 0.37–0.45) | 0.38 (CI: 0.33–0.43) | 0.44 (CI: 0.38–0.53) | 0.44 (CI: 0.40–0.48) | 0.41 (CI: 0.38–0.44) |
+| 100 | 0.11 (CI: 0.10–0.12) | 0.14 (CI: 0.12–0.14) | 0.14 (CI: 0.13–0.14) | 0.09 (CI: 0.07–0.10) | 0.12 (CI: 0.11–0.13) |
+| 200 | 0.24 (CI: 0.19–0.32) | 0.20 (CI: 0.18–0.22) | 0.25 (CI: 0.23–0.27) | 0.21 (CI: 0.19–0.23) | 0.25 (CI: 0.23–0.27) |
+| 500 | 0.41 (CI: 0.37–0.45) | 0.38 (CI: 0.34–0.43) | 0.44 (CI: 0.38–0.53) | 0.44 (CI: 0.40–0.48) | 0.41 (CI: 0.38–0.44) |
 
-DP time scales near-linearly with n at fixed W. Family dependence is modest (~15% range at n=500), and diminishes at larger n as the O(nW) term dominates.
+DP time scales near-linearly with n at fixed W. Family dependence is modest (0.38–0.44 ms at n=500, a ~16% range) and diminishes at larger n as the O(nW) term dominates.
 
 ### 5.7 Memory Usage
 
@@ -242,7 +242,11 @@ Future work: FPTAS comparison, parallel B&B, larger n with capacity scaling, rea
 ## Appendix: Reproducibility
 
 All code available at: [repository URL]
+```bash
+# Build and run experiment
+./build_and_run.sh 20,50,100,200,500 1000 30 42
+
+# Generate tables and figures (Python stdlib only)
+python3 analyze.py out/results/full_experiment.csv
 ```
-java -jar knapsack.jar 20,50,100,200,500 1000 30 42
-```
-Generates `results/full_experiment.csv` with 2,250 rows.
+Generates `out/results/full_experiment.csv` with 2,250 rows (750 instances x 3 algorithms).
