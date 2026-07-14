@@ -1,10 +1,10 @@
 # Java build output
 target/
-out/algorithms/
-out/benchmark/
-out/dataset/
-out/model/
-out/*.class
+*.class
+
+# Downloaded dependencies
+lib/
+*.jar
 
 # Python bytecode
 __pycache__/
@@ -17,5 +17,8 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# Keep canonical experimental data
+# Ignore all of out/ except canonical data
+out/*
 !out/results/
+out/results/*
+!out/results/full_experiment.csv

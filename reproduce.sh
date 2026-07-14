@@ -2,7 +2,7 @@
 # reproduce.sh -- Full reproduction pipeline.
 #
 # Regenerates all experimental results, tables, and figures from scratch.
-# Requires: Java 17+, Python 3.8+ (standard library only, no pip dependencies).
+# Requires: Java 17+, Python 3.8+ (numpy, matplotlib).
 #
 # Usage:
 #   ./reproduce.sh

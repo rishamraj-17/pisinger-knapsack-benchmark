@@ -43,7 +43,7 @@ Total: 750 instances, 2,250 algorithm runs.
 ├── tables/                 # Generated LaTeX tables (do not edit manually)
 ├── figures/                # Generated figures (PDF, PNG, SVG)
 ├── out/results/            # Canonical experimental data (full_experiment.csv)
-├── analyze.py              # Analysis pipeline (Python stdlib only)
+├── analyze.py              # Analysis pipeline (tables + figures)
 ├── figures.py              # Publication figure generation
 ├── plot_utils.py           # Shared plotting utilities
 ├── build_and_run.sh        # Build and run experiment
@@ -55,7 +55,7 @@ Total: 750 instances, 2,250 algorithm runs.
 ## Prerequisites
 
 - **Java 17+** (OpenJDK or Oracle JDK)
-- **Python 3.8+** (standard library only; no pip packages required)
+- **Python 3.8+** (requires numpy and matplotlib for figure generation)
 
 ## Quick Start
 

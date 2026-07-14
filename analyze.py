@@ -122,7 +122,7 @@ def write_latex_table(filename, header, rows, caption, label):
         f.write('\\centering\n')
         f.write(f'\\caption{{{caption}}}\n')
         f.write(f'\\label{{{label}}}\n')
-        f.write(f'\\begin{{tabular}}{{{"l" + "c" * len(header)}}}\n')
+        f.write(f'\\begin{{tabular}}{{{"l" + "c" * (len(header) - 1)}}}\n')
         f.write('\\toprule\n')
         f.write(' & '.join(header) + ' \\\\\n')
         f.write('\\midrule\n')

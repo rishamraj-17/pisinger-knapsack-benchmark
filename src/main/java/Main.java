@@ -22,11 +22,11 @@ import java.util.List;
  * 
  * Defaults: n={20,50,100,200,500}, capacity=1000, instances=30, seed=42
  * 
- * Output: results/full_experiment.csv (canonical CSV with 2250 rows x 3 algorithms = 6750 rows)
+ * Output: out/results/full_experiment.csv (canonical CSV with 2250 rows x 3 algorithms = 6750 rows)
  * 
  * Pipeline:
- *   1. Run this class -> generates results/full_experiment.csv
- *   2. Run analysis/analyze.py results/full_experiment.csv -> generates figures/ and tables/
+ *   1. Run this class -> generates out/results/full_experiment.csv
+ *   2. Run python3 analyze.py out/results/full_experiment.csv -> generates tables/ and figures/
  *   3. Use tables/*.tex in paper
  */
 public final class Main {
