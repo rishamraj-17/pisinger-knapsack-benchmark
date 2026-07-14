@@ -201,10 +201,12 @@ def setup_publication_style():
     })
 
 
-def save_figure(fig, fig_dir, basename, formats=('png', 'pdf', 'svg')):
+def save_figure(fig, fig_dir, basename, formats=('pdf', 'png', 'svg')):
     saved = []
     for fmt in formats:
-        path = os.path.join(fig_dir, f'{basename}.{fmt}')
+        fmt_dir = os.path.join(fig_dir, fmt)
+        os.makedirs(fmt_dir, exist_ok=True)
+        path = os.path.join(fmt_dir, f'{basename}.{fmt}')
         fig.savefig(path, format=fmt, dpi=600, bbox_inches='tight', facecolor='white')
         saved.append(path)
     return saved

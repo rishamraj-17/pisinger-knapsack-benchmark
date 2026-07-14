@@ -1,61 +1,11 @@
-# Knapsack Optimization: Empirical Comparison
+# Knapsack Optimization: An Experimental Study of Classical Algorithms Under Different Problem Characteristics
 
-An experimental study comparing three classical 0/1 knapsack algorithms across five instance families, with analysis of how instance correlation structure affects practical performance.
-
-## Motivation
-
-The 0/1 Knapsack Problem is a foundational problem in combinatorial optimization. While the theoretical complexity of standard algorithms is well understood, their *practical* behavior under different instance characteristics is less systematically documented. This study fills that gap with a controlled, reproducible empirical comparison.
-
-## Algorithms
-
-| Algorithm | Time Complexity | Space | Optimal? |
-|-----------|----------------|-------|----------|
-| **Greedy** (value/weight ratio) | O(n log n) | O(n) | No |
-| **Dynamic Programming** | O(nW) | O(W) | Yes |
-| **Branch & Bound** | Exponential (worst) | O(n) | Yes |
-
-## Instance Families
-
-Following Pisinger (2005), five correlation structures:
-
-| Family | Construction | Character |
-|--------|-------------|-----------|
-| Uncorrelated | `w ~ U(1,1000)`, `v ~ U(1,1000)` | No structure |
-| Weakly Correlated | `w ~ U(1,1000)`, `v = w + U(-100,100)` | Mild correlation |
-| Strongly Correlated | `w ~ U(1,1000)`, `v = w + U(1,10)` | Values close to weights |
-| Inverse Correlated | `w ~ U(1,1000)`, `v = 1001 - w` | Heavy items have low value |
-| Almost Equal Ratios | `w ~ U(1,1000)`, `v ~ w * 1.0 * (1 + U(-0.1,0.1))` | Near-identical ratios |
-
-Parameters: n in {20, 50, 100, 200, 500}, W = 1000, 30 random seeds per (n, family).
-Total: 750 instances, 2,250 algorithm runs.
-
-## Repository Structure
-
-```
-.
-├── src/main/java/          # Java source code
-│   ├── Main.java           # Experiment entry point
-│   ├── algorithms/         # Greedy, DynamicProgramming, BranchAndBound
-│   ├── dataset/            # Five instance generators (Pisinger families)
-│   ├── benchmark/          # BenchmarkRunner, ResultsExporter
-│   └── model/              # Item, KnapsackInstance, Result
-├── paper/draft.md          # Research paper (Markdown)
-├── tables/                 # Generated LaTeX tables (do not edit manually)
-├── figures/                # Generated figures (PDF, PNG, SVG)
-├── out/results/            # Canonical experimental data (full_experiment.csv)
-├── analyze.py              # Analysis pipeline (tables + figures)
-├── figures.py              # Publication figure generation
-├── plot_utils.py           # Shared plotting utilities
-├── build_and_run.sh        # Build and run experiment
-├── reproduce.sh            # Full reproduction pipeline
-├── pom.xml                 # Maven build configuration
-└── lib/                    # commons-csv dependency (auto-downloaded)
-```
+A reproducible empirical study comparing three classical 0/1 knapsack algorithms (Greedy, Dynamic Programming, Branch & Bound) across five Pisinger instance families, analyzing how instance correlation structure affects practical performance.
 
 ## Prerequisites
 
 - **Java 17+** (OpenJDK or Oracle JDK)
-- **Python 3.8+** (requires numpy and matplotlib for figure generation)
+- **Python 3.8+** with [NumPy](https://numpy.org/) and [Matplotlib](https://matplotlib.org/)
 
 ## Quick Start
 
@@ -64,12 +14,12 @@ Total: 750 instances, 2,250 algorithm runs.
 ./reproduce.sh
 ```
 
-This runs the complete pipeline and produces all outputs listed below.
+This runs 2,250 algorithm runs (750 instances x 3 algorithms) and generates all tables and figures.
 
-## Reproducing Step by Step
+### Step by Step
 
 ```bash
-# 1. Build and run the experiment (generates 2,250 rows)
+# 1. Build and run the experiment
 ./build_and_run.sh 20,50,100,200,500 1000 30 42
 
 # 2. Generate LaTeX tables and publication figures
@@ -81,60 +31,66 @@ python3 analyze.py out/results/full_experiment.csv
 ```bash
 # Smaller run for testing (~10 seconds)
 ./build_and_run.sh 20,50 1000 5 42
-
-# Different capacity and seed
-./build_and_run.sh 20,50,100 2000 10 99
 ```
 
 ## Generated Outputs
 
 | File | Description |
 |------|-------------|
-| `out/results/full_experiment.csv` | Raw data (2,250 rows: algorithm, family, n, time, memory, solution, nodes) |
-| `tables/table_time_n500.tex` | Mean execution time at n=500 with 95% bootstrap CI |
-| `tables/table_greedy_gap.tex` | Greedy optimality gap statistics |
-| `tables/table_bb_nodes.tex` | Branch & Bound nodes explored |
-| `tables/table_bb_time_n500.tex` | B&B runtime at n=500 with outlier analysis |
-| `tables/table_dp_scaling.tex` | DP runtime scaling with n |
-| `tables/table_full_summary.csv` | Complete summary (all n, algorithms, families) |
-| `figures/runtime_vs_n.pdf` | Runtime vs. problem size by algorithm |
-| `figures/greedy_gap_boxplot.pdf` | Greedy optimality gap distribution |
-| `figures/bb_nodes_boxplot.pdf` | B&B search effort distribution |
-| `figures/bb_runtime_distribution.pdf` | B&B runtime at n=500 |
-| `figures/runtime_comparison_n500.pdf` | Side-by-side runtime comparison |
-| `figures/dp_scaling.pdf` | DP runtime scaling with confidence intervals |
+| `out/results/full_experiment.csv` | Raw data (2,250 rows) |
+| `tables/table_*.tex` | LaTeX tables for direct inclusion |
+| `figures/pdf/*.pdf` | Publication figures (vector) |
+| `figures/png/*.png` | Publication figures (600 DPI) |
+| `figures/svg/*.svg` | Publication figures (editable) |
 
-All figures are also available in PNG (600 DPI) and SVG formats.
+## Repository Structure
+
+```
+├── src/main/java/          # Java source code
+│   ├── Main.java           # Entry point
+│   ├── algorithms/         # Greedy, DP, BranchAndBound
+│   ├── dataset/            # Pisinger instance generators
+│   ├── benchmark/          # BenchmarkRunner, ResultsExporter
+│   └── model/              # Item, KnapsackInstance, Result
+├── paper/draft.md          # Research paper (Markdown)
+├── tables/                 # Generated LaTeX tables
+├── figures/                # Generated figures (pdf/, png/, svg/)
+├── out/results/            # Canonical data (full_experiment.csv)
+├── analyze.py              # Analysis pipeline
+├── figures.py              # Figure generation
+├── plot_utils.py           # Shared plotting utilities
+├── build_and_run.sh        # Build and run experiment
+├── reproduce.sh            # Full reproduction pipeline
+└── pom.xml                 # Maven build configuration
+```
 
 ## Reproducibility
 
-Every table and figure in this paper is generated automatically from the canonical experiment pipeline:
+Every table and figure in the paper is generated automatically:
 
-1. `build_and_run.sh` produces `out/results/full_experiment.csv` from deterministic, seeded random instances.
-2. `analyze.py` reads the CSV and writes `tables/*.tex` and triggers `figures.py` for figures.
-3. The paper references these generated tables directly.
+1. `build_and_run.sh` produces `out/results/full_experiment.csv` from deterministic, seeded instances
+2. `analyze.py` reads the CSV and writes `tables/*.tex` and triggers `figures.py`
 
-No figures or statistics are edited manually. Running `./reproduce.sh` reproduces the complete experimental results from scratch.
+No figures or statistics are edited manually. See `PIPELINE.md` for the full provenance chain.
 
 ## Paper
 
-The research paper is at `paper/draft.md`. LaTeX tables in `tables/` are designed to be included directly via `\input{tables/table_*}`.
-
-## Key Findings
-
-- **Greedy is provably optimal** on Inverse Correlated instances (where `v + w = constant`) and achieves <1% median gap on Uncorrelated/Weakly Correlated instances.
-- **DP runtime is nearly independent** of instance family, scaling linearly with n at fixed capacity.
-- **B&B search effort** varies dramatically by family: fast on Uncorrelated/Weakly Correlated, but exponential blowup on Inverse Correlated (median 46K nodes at n=500, max 25M).
+The research paper is at [`paper/draft.md`](paper/draft.md). LaTeX tables in `tables/` are designed for `\input{tables/table_*}` inclusion.
 
 ## Citation
 
 ```bibtex
-@article{knapsack2026,
-  title={Knapsack Optimization: An Experimental Study of Classical Algorithms Under Different Problem Characteristics},
-  year={2026}
+@software{knapsack2026,
+  author       = {Risham Raj},
+  title        = {Knapsack Optimization: An Experimental Study of Classical Algorithms Under Different Problem Characteristics},
+  year         = {2026},
+  url          = {https://github.com/rishamraj-17/knapsack-benchmark},
+  license      = {MIT}
 }
 ```
 
+See [`CITATION.cff`](CITATION.cff) for a machine-readable citation.
+
 ## License
 
-MIT
+[MIT](LICENSE)

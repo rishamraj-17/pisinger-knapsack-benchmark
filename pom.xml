@@ -8,7 +8,7 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>Knapsack Optimization: Empirical Comparison</name>
+    <name>Knapsack Optimization: An Experimental Study of Classical Algorithms Under Different Problem Characteristics</name>
     <description>Experimental study of classical knapsack algorithms under different problem characteristics</description>
 
     <properties>

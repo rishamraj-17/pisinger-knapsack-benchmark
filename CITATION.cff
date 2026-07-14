@@ -1,9 +1,21 @@
 cff-version: 1.2.0
 title: "Knapsack Optimization: An Experimental Study of Classical Algorithms Under Different Problem Characteristics"
 type: software
-authors:
-  - family-names: ""
-    given-names: ""
 message: "If you use this software, please cite it using the metadata from this file."
-repository-code: ""
+authors:
+  - family-names: Raj
+    given-names: Risham
+repository-code: "https://github.com/rishamraj-17/knapsack-benchmark"
 license: MIT
+abstract: >-
+  A reproducible empirical study comparing three classical 0/1 knapsack
+  algorithms (Greedy, Dynamic Programming, Branch & Bound) across
+  five Pisinger instance families, with analysis of how instance
+  correlation structure affects practical performance.
+keywords:
+  - knapsack problem
+  - empirical algorithmics
+  - dynamic programming
+  - branch and bound
+  - greedy algorithms
+date-released: "2026-07-14"

@@ -4,7 +4,7 @@ Canonical analysis pipeline for the Knapsack Empirical Comparison.
 
 Reads the experimental CSV produced by BenchmarkRunner and generates:
   - LaTeX tables with 95% bootstrap confidence intervals (tables/*.tex)
-  - Publication-quality figures in PDF, PNG, and SVG (figures/*)
+  - Publication-quality figures in PDF, PNG, and SVG (figures/pdf/, figures/png/, figures/svg/)
   - A CSV summary of all results (tables/table_full_summary.csv)
 
 Table generation uses only the Python standard library.

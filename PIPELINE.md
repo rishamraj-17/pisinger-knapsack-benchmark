@@ -14,8 +14,8 @@ This document describes the single, authoritative workflow for reproducing all e
         │                        │                          │
         ▼                        ▼                          ▼
 out/results/               tables/*.tex              Paper draft
-  full_experiment.csv      figures/*.png              LaTeX tables
-         2250 rows
+  full_experiment.csv      figures/pdf/*.pdf          LaTeX tables
+         2250 rows         figures/png/*.png
 ```
 
 ---
@@ -66,7 +66,7 @@ python3 analyze.py out/results/full_experiment.csv
 - **LaTeX Tables**: `tables/table_*.tex` (copy directly into paper)
 - **CSV Summary**: `tables/table_full_summary.csv`
 - **Text Summary**: Printed to stdout
-- **Figures**: `figures/*.pdf`, `figures/*.png`, `figures/*.svg`
+- **Figures**: `figures/pdf/*.pdf`, `figures/png/*.png`, `figures/svg/*.svg`
 
 ### Generated Tables
 

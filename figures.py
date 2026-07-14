@@ -386,17 +386,17 @@ def generate_all_figures(rows, greedy_rows, bb_rows, families, algorithms,
 
     all_files = []
     files = generate_figure_runtime_vs_n(fig_dir, rows, families, algorithms, max_n, ns)
-    all_files.extend([os.path.basename(f) for f in files])
+    all_files.extend([os.path.relpath(f, fig_dir) for f in files])
     files = generate_figure_greedy_gap(fig_dir, greedy_rows, families)
-    all_files.extend([os.path.basename(f) for f in files])
+    all_files.extend([os.path.relpath(f, fig_dir) for f in files])
     files = generate_figure_bb_nodes(fig_dir, bb_rows, families)
-    all_files.extend([os.path.basename(f) for f in files])
+    all_files.extend([os.path.relpath(f, fig_dir) for f in files])
     files = generate_figure_bb_runtime(fig_dir, bb_rows, families, max_n)
-    all_files.extend([os.path.basename(f) for f in files])
+    all_files.extend([os.path.relpath(f, fig_dir) for f in files])
     files = generate_figure_runtime_comparison(fig_dir, rows, families, algorithms, max_n)
-    all_files.extend([os.path.basename(f) for f in files])
+    all_files.extend([os.path.relpath(f, fig_dir) for f in files])
     if table4_rows is not None:
         files = generate_figure_dp_scaling(fig_dir, table4_rows, families, ns)
-        all_files.extend([os.path.basename(f) for f in files])
+        all_files.extend([os.path.relpath(f, fig_dir) for f in files])
 
     return sorted(all_files)
