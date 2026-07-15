@@ -60,12 +60,16 @@ public final class BranchAndBound implements Algorithm {
         long nodesExplored = 0;
         long nodesPruned = 0;
         int maxQueueSize = 1;
+        boolean searchCompleted = true;
 
         while (!pq.isEmpty()) {
             if (Thread.currentThread().isInterrupted()) {
                 throw new RuntimeException("BranchAndBound interrupted at node " + nodesExplored);
             }
-            if (nodesExplored >= MAX_NODES) break;
+            if (nodesExplored >= MAX_NODES) {
+                searchCompleted = false;
+                break;
+            }
 
             Node node = pq.poll();
             nodesExplored++;
@@ -111,7 +115,7 @@ public final class BranchAndBound implements Algorithm {
                 .n(instance.getN())
                 .capacity(instance.getCapacity())
                 .instanceId(instance.getId())
-                .seed(instance.getId())
+                .seed(instance.getBaseSeed())
                 .timeNanos(timeNanos)
                 .memoryBytes(memUsed)
                 .solutionValue(bestValue)
@@ -119,7 +123,7 @@ public final class BranchAndBound implements Algorithm {
                 .nodesExplored(nodesExplored)
                 .nodesPruned(nodesPruned)
                 .maxQueueSize(maxQueueSize)
-                .optimal(true)
+                .optimal(searchCompleted)
                 .build();
     }
 

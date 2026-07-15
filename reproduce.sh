@@ -45,14 +45,14 @@ with open('out/results/scaled_experiment.csv') as f:
     scaled_rows = list(reader)
     scaled_header = reader.fieldnames
 
-# Add capacity_mode column
-out_header = fixed_header + ['capacity_mode']
+# Add capacity_mode column (fixed_experiment already has one; replace it to avoid duplicates)
+out_header = [h for h in fixed_header if h != 'capacity_mode'] + ['capacity_mode']
 out_rows = []
 for r in fixed_rows:
-    row = [r[h] for h in fixed_header] + ['fixed']
+    row = [r[h] for h in fixed_header if h != 'capacity_mode'] + ['fixed']
     out_rows.append(row)
 for r in scaled_rows:
-    row = [r[h] for h in fixed_header] + ['scaled']
+    row = [r[h] for h in fixed_header if h != 'capacity_mode'] + ['scaled']
     out_rows.append(row)
 
 with open('out/results/full_experiment.csv', 'w', newline='') as f:

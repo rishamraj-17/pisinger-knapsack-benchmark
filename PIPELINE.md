@@ -64,28 +64,29 @@ python3 analyze.py out/results/full_experiment.csv
 
 ### Output
 
-- **LaTeX Tables**: `tables/table_*.tex` (copy directly into paper)
-- **CSV Summary**: `tables/table_full_summary.csv`
+- **LaTeX Tables**: `tables/*_table_*.tex` (copy directly into paper, `fixed_` and `scaled_` variants)
+- **CSV Summary**: `tables/*_table_full_summary.csv`
 - **Text Summary**: Printed to stdout
 - **Figures**: `figures/pdf/*.pdf`, `figures/png/*.png`, `figures/svg/*.svg`
 
-### Generated Tables
+### Generated Tables (per capacity mode: `fixed_` and `scaled_` prefix)
 
 | File | Description |
 |------|-------------|
-| `table_time_n500.tex` | Mean execution time at n=500 with 95% CI |
-| `table_greedy_gap.tex` | Greedy optimality gap with median, mean +/- std, 95% CI |
-| `table_bb_nodes.tex` | B&B nodes explored (median, 95% CI, min, max) |
-| `table_bb_time_n500.tex` | B&B time at n=500 with outlier analysis |
-| `table_dp_scaling.tex` | DP time by n and family (95% CI) |
-| `table_full_summary.csv` | Complete summary (all n, all algorithms, all families) |
+| `{mode}_table_time_max_n.tex` | Mean execution time at n=1000 with 95% CI |
+| `{mode}_table_greedy_gap.tex` | Greedy optimality gap with median, mean +/- std, 95% CI |
+| `{mode}_table_bb_nodes.tex` | B&B nodes explored (median, 95% CI, min, max) |
+| `{mode}_table_bb_time.tex` | B&B time at n=1000 with outlier analysis |
+| `{mode}_table_dp_scaling.tex` | DP time by n and family (95% CI) |
+| `{mode}_table_bb_pruning.tex` | B&B pruning analysis (median explored, pruned, pruning %) |
+| `{mode}_table_full_summary.csv` | Complete summary (all n, all algorithms, all families) |
 
 ---
 
 ## Step 3: Use in Paper
 
 1. Copy `tables/*.tex` into your paper's LaTeX source
-2. Include with `\input{tables/table_time_n500}` etc.
+2. Include with `\input{tables/fixed_table_time_max_n}` or `\input{tables/scaled_table_time_max_n}` etc.
 3. All numerical claims in paper MUST come from these tables
 
 ---

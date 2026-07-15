@@ -7,14 +7,20 @@ public final class KnapsackInstance {
     private final Item[] items;
     private final String familyName;
     private final String params;
+    private final int baseSeed;
 
     public KnapsackInstance(int id, int n, int capacity, Item[] items, String familyName, String params) {
+        this(id, n, capacity, items, familyName, params, 0);
+    }
+
+    public KnapsackInstance(int id, int n, int capacity, Item[] items, String familyName, String params, int baseSeed) {
         this.id = id;
         this.n = n;
         this.capacity = capacity;
         this.items = items;
         this.familyName = familyName;
         this.params = params;
+        this.baseSeed = baseSeed;
     }
 
     public int getId() { return id; }
@@ -23,6 +29,7 @@ public final class KnapsackInstance {
     public Item[] getItems() { return items.clone(); }
     public String getFamilyName() { return familyName; }
     public String getParams() { return params; }
+    public int getBaseSeed() { return baseSeed; }
 
     public int getTotalWeight() {
         int sum = 0;

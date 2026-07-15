@@ -263,7 +263,7 @@ public final class TimeoutValidation {
             totalWeight += w;
         }
         int capacity = totalWeight / 2;
-        return new KnapsackInstance(0, n, capacity, items, "HardTest", "n=200,small,halved");
+        return new KnapsackInstance(0, n, capacity, items, "HardTest", "n=200,small,halved", 42);
     }
 
     static KnapsackInstance createEasyInstance(int n) {
@@ -275,7 +275,7 @@ public final class TimeoutValidation {
             int value = 1 + rng.nextInt(50);
             items[i] = new Item(i, weight, value);
         }
-        return new KnapsackInstance(0, n, 500, items, "Uncorrelated", "test");
+        return new KnapsackInstance(0, n, 500, items, "Uncorrelated", "test", 42);
     }
 
     static void pass() {

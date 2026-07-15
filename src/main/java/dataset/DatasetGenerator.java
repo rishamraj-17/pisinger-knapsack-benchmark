@@ -36,13 +36,10 @@ public final class DatasetGenerator {
             for (InstanceGenerator baseGen : baseGenerators) {
                 InstanceGenerator sizedGen = createSizedGenerator(baseGen, n);
                 for (int i = 0; i < instancesPerConfig; i++) {
-                    KnapsackInstance inst = sizedGen.generate(id++, rng);
-                    if (capacityMode == CapacityMode.SCALED) {
-                        int totalWeight = inst.getTotalWeight();
-                        int scaledCapacity = (int) (totalWeight * 0.5);
-                        inst = new KnapsackInstance(inst.getId(), inst.getN(), scaledCapacity,
-                                inst.getItems(), inst.getFamilyName(), inst.getParams());
-                    }
+                    KnapsackInstance base = sizedGen.generate(id++, rng);
+                    int cap = capacityMode == CapacityMode.SCALED ? (int) (base.getTotalWeight() * 0.5) : base.getCapacity();
+                    KnapsackInstance inst = new KnapsackInstance(base.getId(), base.getN(), cap,
+                            base.getItems(), base.getFamilyName(), base.getParams(), (int) seed);
                     instances.add(inst);
                 }
             }

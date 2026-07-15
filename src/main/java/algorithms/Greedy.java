@@ -46,7 +46,7 @@ public final class Greedy implements Algorithm {
                 .n(instance.getN())
                 .capacity(instance.getCapacity())
                 .instanceId(instance.getId())
-                .seed(instance.getId())
+                .seed(instance.getBaseSeed())
                 .timeNanos(timeNanos)
                 .memoryBytes(memUsed)
                 .solutionValue(totalValue)
