@@ -11,7 +11,7 @@ abstract: >-
   A reproducible empirical study comparing three classical 0/1 knapsack
   algorithms (Greedy, Dynamic Programming, Branch & Bound) across
   five Pisinger instance families, with analysis of how instance
-  correlation structure affects practical performance.
+  correlation structure and capacity scaling affects practical performance.
 keywords:
   - knapsack problem
   - empirical algorithmics

@@ -41,7 +41,7 @@ public final class BenchmarkRunner {
 
             for (KnapsackInstance instance : instances) {
                 for (int w = 0; w < perInstanceWarmupRuns; w++) {
-                    algo.solve(instance);
+                    warmupWithTimeout(algo, instance, Math.min(timeoutSeconds, 5));
                 }
 
                 Result result = runWithTimeout(algo, instance);
@@ -87,12 +87,16 @@ public final class BenchmarkRunner {
     }
 
     private Result runWithTimeout(Algorithm algo, KnapsackInstance instance) {
+        return runWithTimeout(algo, instance, timeoutSeconds);
+    }
+
+    private Result runWithTimeout(Algorithm algo, KnapsackInstance instance, int timeoutSec) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         try {
             Future<Result> future = executor.submit(() -> algo.solve(instance));
-            return future.get(timeoutSeconds, java.util.concurrent.TimeUnit.SECONDS);
-        } catch (java.util.concurrent.TimeoutException e) {
-            System.err.println("Timeout: " + algo.getName() + " on instance " + instance.getId());
+            return future.get(timeoutSec, java.util.concurrent.TimeUnit.SECONDS);
+        } catch (java.util.concurrent.TimeoutException | java.util.concurrent.ExecutionException e) {
+            System.err.println("Error/Timeout: " + algo.getName() + " on instance " + instance.getId() + ": " + e.getMessage());
             return Result.builder()
                     .algorithm(algo.getName())
                     .datasetType(instance.getFamilyName())
@@ -100,7 +104,7 @@ public final class BenchmarkRunner {
                     .capacity(instance.getCapacity())
                     .instanceId(instance.getId())
                     .seed(instance.getId())
-                    .timeNanos(timeoutSeconds * 1_000_000_000L)
+                    .timeNanos(timeoutSec * 1_000_000_000L)
                     .memoryBytes(0)
                     .solutionValue(0)
                     .nodesExplored(0)
@@ -123,6 +127,33 @@ public final class BenchmarkRunner {
                     .build();
         } finally {
             executor.shutdownNow();
+            try {
+                if (!executor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+                    System.err.println("WARNING: Worker thread did not terminate within 5s after interrupt for "
+                            + algo.getName() + " on instance " + instance.getId());
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    private void warmupWithTimeout(Algorithm algo, KnapsackInstance instance, int timeoutSec) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            Future<?> future = executor.submit(() -> algo.solve(instance));
+            future.get(timeoutSec, java.util.concurrent.TimeUnit.SECONDS);
+        } catch (java.util.concurrent.TimeoutException | java.util.concurrent.ExecutionException e) {
+            // Warmup timed out or errored — acceptable, just skip
+        } catch (Exception e) {
+            // Ignore warmup errors
+        } finally {
+            executor.shutdownNow();
+            try {
+                executor.awaitTermination(2, java.util.concurrent.TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 

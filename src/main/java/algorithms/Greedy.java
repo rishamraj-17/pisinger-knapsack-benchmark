@@ -27,6 +27,9 @@ public final class Greedy implements Algorithm {
         int totalValue = 0;
         int totalWeight = 0;
         for (Item item : sorted) {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new RuntimeException("Greedy interrupted");
+            }
             if (totalWeight + item.getWeight() <= capacity) {
                 totalWeight += item.getWeight();
                 totalValue += item.getValue();

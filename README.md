@@ -1,6 +1,6 @@
 # Knapsack Optimization: An Experimental Study of Classical Algorithms Under Different Problem Characteristics
 
-A reproducible empirical study comparing three classical 0/1 knapsack algorithms (Greedy, Dynamic Programming, Branch & Bound) across five Pisinger instance families, analyzing how instance correlation structure affects practical performance.
+A reproducible empirical study comparing three classical 0/1 knapsack algorithms (Greedy, Dynamic Programming, Branch & Bound) across five Pisinger instance families, analyzing how instance correlation structure and capacity scaling affects practical performance.
 
 ## Prerequisites
 
@@ -14,7 +14,7 @@ A reproducible empirical study comparing three classical 0/1 knapsack algorithms
 ./reproduce.sh
 ```
 
-This runs 2,250 algorithm runs (750 instances x 3 algorithms) and generates all tables and figures.
+This runs 18,000 algorithm runs (3,000 instances x 3 algorithms x 2 capacity modes) and generates all tables and figures.
 
 ### Step by Step
 
@@ -37,7 +37,7 @@ python3 analyze.py out/results/full_experiment.csv
 
 | File | Description |
 |------|-------------|
-| `out/results/full_experiment.csv` | Raw data (2,250 rows) |
+| `out/results/full_experiment.csv` | Raw data (18,000 rows) |
 | `tables/table_*.tex` | LaTeX tables for direct inclusion |
 | `figures/pdf/*.pdf` | Publication figures (vector) |
 | `figures/png/*.png` | Publication figures (600 DPI) |
@@ -69,7 +69,7 @@ python3 analyze.py out/results/full_experiment.csv
 Every table and figure in the paper is generated automatically:
 
 1. `build_and_run.sh` produces `out/results/full_experiment.csv` from deterministic, seeded instances
-2. `analyze.py` reads the CSV and writes `tables/*.tex` and triggers `figures.py`
+2. `analyze.py` reads the CSV and writes `tables/*.tex` and triggers `figures.py` (generating both fixed and scaled capacity results)
 
 No figures or statistics are edited manually. See `PIPELINE.md` for the full provenance chain.
 

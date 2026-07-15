@@ -7,16 +7,24 @@ import java.util.List;
 import java.util.Random;
 
 public final class DatasetGenerator {
+
+    public enum CapacityMode {
+        FIXED,
+        SCALED
+    }
+
     private final List<InstanceGenerator> baseGenerators;
     private final List<Integer> sizes;
     private final int instancesPerConfig;
     private final long seed;
+    private final CapacityMode capacityMode;
 
     private DatasetGenerator(Builder builder) {
         this.baseGenerators = builder.generators;
         this.sizes = builder.sizes;
         this.instancesPerConfig = builder.instancesPerConfig;
         this.seed = builder.seed;
+        this.capacityMode = builder.capacityMode;
     }
 
     public List<KnapsackInstance> generate() {
@@ -24,11 +32,18 @@ public final class DatasetGenerator {
         int id = 0;
         
         for (int n : sizes) {
-            Random rng = new Random(seed + n); // Different seed per n for variety
+            Random rng = new Random(seed + n);
             for (InstanceGenerator baseGen : baseGenerators) {
                 InstanceGenerator sizedGen = createSizedGenerator(baseGen, n);
                 for (int i = 0; i < instancesPerConfig; i++) {
-                    instances.add(sizedGen.generate(id++, rng));
+                    KnapsackInstance inst = sizedGen.generate(id++, rng);
+                    if (capacityMode == CapacityMode.SCALED) {
+                        int totalWeight = inst.getTotalWeight();
+                        int scaledCapacity = (int) (totalWeight * 0.5);
+                        inst = new KnapsackInstance(inst.getId(), inst.getN(), scaledCapacity,
+                                inst.getItems(), inst.getFamilyName(), inst.getParams());
+                    }
+                    instances.add(inst);
                 }
             }
         }
@@ -59,6 +74,7 @@ public final class DatasetGenerator {
         private final List<Integer> sizes = new ArrayList<>();
         private int instancesPerConfig = 10;
         private long seed = System.currentTimeMillis();
+        private CapacityMode capacityMode = CapacityMode.FIXED;
 
         public Builder addGenerator(InstanceGenerator gen) {
             generators.add(gen);
@@ -77,6 +93,11 @@ public final class DatasetGenerator {
 
         public Builder seed(long seed) {
             this.seed = seed;
+            return this;
+        }
+
+        public Builder capacityMode(CapacityMode mode) {
+            this.capacityMode = mode;
             return this;
         }
 

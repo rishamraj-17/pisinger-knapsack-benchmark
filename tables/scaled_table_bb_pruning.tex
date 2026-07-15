@@ -1,0 +1,16 @@
+\begin{table}[tb]
+\centering
+\caption{Branch $\&$ Bound pruning analysis (Scaled Capacity (W=0.5*sum), all $n$ pooled)}
+\label{tab:scaled-bb-pruning}
+\begin{tabular}{lcccc}
+\toprule
+Family & Median Explored & Median Pruned & Median Pruning \% & Median Max Queue \\
+\midrule
+Uncorr. & 360 & 116 & 21.9% & 125 \\
+WeakCorr. & 806 & 110 & 12.2% & 150 \\
+StrongCorr. & 7493 & 274 & 4.0% & 672 \\
+InverseCorr. & 2742 & 34 & 3.0% & 330 \\
+EqualRatios & 876 & 151 & 19.6% & 188 \\
+\bottomrule
+\end{tabular}
+\end{table}

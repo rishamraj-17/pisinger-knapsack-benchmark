@@ -1,0 +1,16 @@
+\begin{table}[tb]
+\centering
+\caption{Branch $\&$ Bound execution time (ms) at $n=1000$ (Scaled Capacity (W=0.5*sum))}
+\label{tab:scaled-bb-time}
+\begin{tabular}{lcccc}
+\toprule
+Family & Median [95\% CI] & Mean ± Std & Mean 95\% CI & Max \\
+\midrule
+Uncorr. & 3.08 (CI: 3.00–3.18) & 3.23 ± 0.60 & 3.12–3.35 & 5.88 \\
+WeakCorr. & 2.13 (CI: 1.88–2.46) & 3.04 ± 3.06 & 2.50–3.73 & 22.93 \\
+StrongCorr. & 14726.87 (CI: 6362.51–15278.13) & 9561.24 ± 7631.87 & 8078.38–11053.41 & 18452.44 \\
+InverseCorr. & 11382.36 (CI: 10663.96–14146.99) & 10491.22 ± 6186.48 & 9306.01–11689.71 & 19306.70 \\
+EqualRatios & 1.53 (CI: 0.98–7.68) & 2321.22 ± 5326.03 & 1374.32–3397.43 & 19438.93 \\
+\bottomrule
+\end{tabular}
+\end{table}

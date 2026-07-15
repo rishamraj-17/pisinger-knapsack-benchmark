@@ -13,6 +13,8 @@ public final class Result {
     private final int optimalValue;
     private final double optimalityGap;
     private final long nodesExplored;
+    private final long nodesPruned;
+    private final int maxQueueSize;
     private final boolean optimal;
 
     private Result(Builder builder) {
@@ -28,6 +30,8 @@ public final class Result {
         this.optimalValue = builder.optimalValue;
         this.optimalityGap = builder.optimalityGap;
         this.nodesExplored = builder.nodesExplored;
+        this.nodesPruned = builder.nodesPruned;
+        this.maxQueueSize = builder.maxQueueSize;
         this.optimal = builder.optimal;
     }
 
@@ -45,6 +49,8 @@ public final class Result {
     public int getOptimalValue() { return optimalValue; }
     public double getOptimalityGap() { return optimalityGap; }
     public long getNodesExplored() { return nodesExplored; }
+    public long getNodesPruned() { return nodesPruned; }
+    public int getMaxQueueSize() { return maxQueueSize; }
     public boolean isOptimal() { return optimal; }
 
     public String[] toCsvRow() {
@@ -63,6 +69,8 @@ public final class Result {
             optimalValue > 0 ? String.valueOf(optimalValue) : "",
             optimalValue > 0 ? String.format("%.6f", optimalityGap) : "",
             String.valueOf(nodesExplored),
+            String.valueOf(nodesPruned),
+            String.valueOf(maxQueueSize),
             String.valueOf(optimal)
         };
     }
@@ -72,7 +80,7 @@ public final class Result {
             "algorithm", "dataset_type", "n", "capacity", "instance_id", "seed",
             "time_nanos", "time_millis", "memory_bytes", "memory_mb",
             "solution_value", "optimal_value", "optimality_gap",
-            "nodes_explored", "optimal"
+            "nodes_explored", "nodes_pruned", "max_queue_size", "optimal"
         };
     }
 
@@ -93,6 +101,8 @@ public final class Result {
         private int optimalValue;
         private double optimalityGap;
         private long nodesExplored;
+        private long nodesPruned;
+        private int maxQueueSize;
         private boolean optimal;
 
         public Builder algorithm(String v) { algorithm = v; return this; }
@@ -107,6 +117,8 @@ public final class Result {
         public Builder optimalValue(int v) { optimalValue = v; return this; }
         public Builder optimalityGap(double v) { optimalityGap = v; return this; }
         public Builder nodesExplored(long v) { nodesExplored = v; return this; }
+        public Builder nodesPruned(long v) { nodesPruned = v; return this; }
+        public Builder maxQueueSize(int v) { maxQueueSize = v; return this; }
         public Builder optimal(boolean v) { optimal = v; return this; }
 
         public Result build() {

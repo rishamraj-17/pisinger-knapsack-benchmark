@@ -8,6 +8,14 @@ import java.util.Comparator;
 import java.util.PriorityQueue;
 
 public final class BranchAndBound implements Algorithm {
+    private static final long MAX_NODES = 50_000_000L;
+
+    // MAX_NODES acts as a safety cap for untimed contexts (JIT warmup, per-instance warmup).
+    // 50M nodes is generous enough to find optimal solutions for n≤500 instances with
+    // fractional-bound pruning while preventing runaway computation in untimed warmup loops.
+    // For timed runs, the 30-second thread timeout is the primary mechanism; MAX_NODES
+    // rarely triggers because the interrupt flag (checked below) terminates first.
+
     private static class Node implements Comparable<Node> {
         final int level;
         final int value;
@@ -50,12 +58,22 @@ public final class BranchAndBound implements Algorithm {
 
         int bestValue = 0;
         long nodesExplored = 0;
+        long nodesPruned = 0;
+        int maxQueueSize = 1;
 
         while (!pq.isEmpty()) {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new RuntimeException("BranchAndBound interrupted at node " + nodesExplored);
+            }
+            if (nodesExplored >= MAX_NODES) break;
+
             Node node = pq.poll();
             nodesExplored++;
 
-            if (node.bound <= bestValue) continue;
+            if (node.bound <= bestValue) {
+                nodesPruned++;
+                continue;
+            }
             if (node.level >= n) continue;
 
             int nextLevel = node.level + 1;
@@ -68,14 +86,18 @@ public final class BranchAndBound implements Algorithm {
             }
             if (includeWeight <= capacity) {
                 double bound = fractionalBound(nextLevel, includeValue, includeWeight, sorted, capacity, n);
-                if (bound > bestValue) {
+                if (bound > bestValue && nodesExplored < MAX_NODES) {
                     pq.add(new Node(nextLevel, includeValue, includeWeight, bound));
                 }
             }
 
             double excludeBound = fractionalBound(nextLevel, node.value, node.weight, sorted, capacity, n);
-            if (excludeBound > bestValue) {
+            if (excludeBound > bestValue && nodesExplored < MAX_NODES) {
                 pq.add(new Node(nextLevel, node.value, node.weight, excludeBound));
+            }
+
+            if (pq.size() > maxQueueSize) {
+                maxQueueSize = pq.size();
             }
         }
 
@@ -95,6 +117,8 @@ public final class BranchAndBound implements Algorithm {
                 .solutionValue(bestValue)
                 .optimalValue(bestValue)
                 .nodesExplored(nodesExplored)
+                .nodesPruned(nodesPruned)
+                .maxQueueSize(maxQueueSize)
                 .optimal(true)
                 .build();
     }

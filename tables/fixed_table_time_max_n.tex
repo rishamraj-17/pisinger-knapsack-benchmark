@@ -1,0 +1,14 @@
+\begin{table}[tb]
+\centering
+\caption{Mean execution time (ms) at $n=1000$ (Fixed Capacity (W=1000)) with 95\% bootstrap CI}
+\label{tab:fixed-time-max-n}
+\begin{tabular}{lccccc}
+\toprule
+Algorithm & Uncorr. & WeakCorr. & StrongCorr. & InverseCorr. & EqualRatios \\
+\midrule
+Greedy & 0.21 (CI: 0.18–0.26) & 0.20 (CI: 0.19–0.21) & 0.17 (CI: 0.16–0.18) & 0.12 (CI: 0.12–0.14) & 0.11 (CI: 0.11–0.12) \\
+DynamicProgramming & 0.94 (CI: 0.90–0.98) & 0.98 (CI: 0.94–1.01) & 0.97 (CI: 0.91–1.02) & 0.97 (CI: 0.90–1.03) & 0.98 (CI: 0.94–1.01) \\
+BranchAndBound & 0.32 (CI: 0.31–0.33) & 0.40 (CI: 0.37–0.45) & 1.40 (CI: 1.08–1.76) & 872.45 (CI: 505.15–1317.81) & 1.45 (CI: 1.02–1.97) \\
+\bottomrule
+\end{tabular}
+\end{table}

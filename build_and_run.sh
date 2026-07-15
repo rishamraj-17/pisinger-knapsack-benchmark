@@ -2,10 +2,11 @@
 # Build and run the knapsack benchmark experiment.
 #
 # Usage:
-#   ./build_and_run.sh [n-values] [capacity] [instances-per-config] [seed]
+#   ./build_and_run.sh [n-values] [capacity] [instances-per-config] [seed] [mode]
 #
-# Defaults: n={20,50,100,200,500}, capacity=1000, instances=30, seed=42
-# Example:  ./build_and_run.sh 20,50,100,200,500 1000 30 42
+# Defaults: n={20,50,100,200,500}, capacity=1000, instances=30, seed=42, mode=fixed
+# Example (fixed):   ./build_and_run.sh 20,50,100,200,500 1000 30 42 fixed
+# Example (scaled):  ./build_and_run.sh 20,50,100,200,500,1000 0 100 42 scaled
 
 set -e
 
@@ -29,7 +30,7 @@ javac -d "$OUT_DIR" -cp "$LIB_DIR/commons-csv-1.10.0.jar" \
 
 echo "Running experiment..."
 cd "$OUT_DIR"
-java -cp ".:../$LIB_DIR/commons-csv-1.10.0.jar" Main "$@"
+java -Xmx2g -cp ".:../$LIB_DIR/commons-csv-1.10.0.jar" Main "$@"
 
 echo ""
 echo "Done. Results in out/results/full_experiment.csv"
