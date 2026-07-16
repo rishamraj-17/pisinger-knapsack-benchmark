@@ -81,7 +81,7 @@ The research paper is at [`paper/draft.md`](paper/draft.md). LaTeX tables in `ta
 
 ```bibtex
 @software{knapsack2026,
-  author       = {Risham Raj},
+  author       = {Risham Raj Byahut},
   title        = {Knapsack Optimization: An Experimental Study of Classical Algorithms Under Different Problem Characteristics},
   year         = {2026},
   url          = {https://github.com/rishamraj-17/knapsack-benchmark},
