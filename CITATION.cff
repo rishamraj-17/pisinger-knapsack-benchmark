@@ -4,7 +4,7 @@ version: 2.0.0
 type: software
 message: "If you use this software, please cite it using the metadata from this file."
 authors:
-  - family-names: Raj
+  - family-names: Byahut
     given-names: Risham
 repository-code: "https://github.com/rishamraj-17/knapsack-benchmark"
 license: MIT
