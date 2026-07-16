@@ -38,7 +38,7 @@ python3 analyze.py out/results/full_experiment.csv
 | File | Description |
 |------|-------------|
 | `out/results/full_experiment.csv` | Raw data (18,000 rows) |
-| `tables/table_*.tex` | LaTeX tables for direct inclusion |
+| `tables/*_table_*.tex` | LaTeX tables for direct inclusion |
 | `figures/fixed/pdf/*.pdf`, `figures/scaled/pdf/*.pdf` | Publication figures (vector) |
 | `figures/fixed/png/*.png`, `figures/scaled/png/*.png` | Publication figures (600 DPI) |
 | `figures/fixed/svg/*.svg`, `figures/scaled/svg/*.svg` | Publication figures (editable) |
@@ -75,7 +75,7 @@ No figures or statistics are edited manually. See `PIPELINE.md` for the full pro
 
 ## Paper
 
-The research paper is at [`paper/draft.md`](paper/draft.md). LaTeX tables in `tables/` are designed for `\input{tables/table_*}` inclusion.
+The research paper is at [`paper/draft.md`](paper/draft.md). LaTeX tables in `tables/` are designed for `\input{tables/*_table_*}` inclusion.
 
 ## Citation
 
