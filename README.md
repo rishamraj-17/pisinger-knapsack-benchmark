@@ -10,11 +10,11 @@ A reproducible empirical study comparing three classical 0/1 knapsack algorithms
 ## Quick Start
 
 ```bash
-# Full reproduction: experiment + analysis (~2 minutes)
+# Full reproduction: experiment + analysis (~2 minutes, 18,000 runs)
 ./reproduce.sh
 ```
 
-This runs 18,000 algorithm runs (3,000 instances x 3 algorithms x 2 capacity modes) and generates all tables and figures.
+This runs the full benchmark (3,000 instances x 3 algorithms x 2 capacity modes = 18,000 algorithm runs) and generates all tables and figures.
 
 ### Step by Step
 
