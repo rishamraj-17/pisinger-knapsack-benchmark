@@ -29,8 +29,7 @@ javac -d "$OUT_DIR" -cp "$LIB_DIR/commons-csv-1.10.0.jar" \
     $(find "$SRC_DIR" -name "*.java")
 
 echo "Running experiment..."
-cd "$OUT_DIR"
-java -Xmx2g -cp ".:../$LIB_DIR/commons-csv-1.10.0.jar" Main "$@"
+java -Xmx2g -cp "$OUT_DIR:$LIB_DIR/commons-csv-1.10.0.jar" Main "$@"
 
 echo ""
 echo "Done. Results in out/results/full_experiment.csv"

@@ -39,9 +39,9 @@ python3 analyze.py out/results/full_experiment.csv
 |------|-------------|
 | `out/results/full_experiment.csv` | Raw data (18,000 rows) |
 | `tables/table_*.tex` | LaTeX tables for direct inclusion |
-| `figures/pdf/*.pdf` | Publication figures (vector) |
-| `figures/png/*.png` | Publication figures (600 DPI) |
-| `figures/svg/*.svg` | Publication figures (editable) |
+| `figures/fixed/pdf/*.pdf`, `figures/scaled/pdf/*.pdf` | Publication figures (vector) |
+| `figures/fixed/png/*.png`, `figures/scaled/png/*.png` | Publication figures (600 DPI) |
+| `figures/fixed/svg/*.svg`, `figures/scaled/svg/*.svg` | Publication figures (editable) |
 
 ## Repository Structure
 
@@ -54,7 +54,7 @@ python3 analyze.py out/results/full_experiment.csv
 │   └── model/              # Item, KnapsackInstance, Result
 ├── paper/draft.md          # Research paper (Markdown)
 ├── tables/                 # Generated LaTeX tables
-├── figures/                # Generated figures (pdf/, png/, svg/)
+├── figures/                # Generated figures (fixed/{pdf,png,svg}, scaled/{pdf,png,svg})
 ├── out/results/            # Canonical data (full_experiment.csv)
 ├── analyze.py              # Analysis pipeline
 ├── figures.py              # Figure generation

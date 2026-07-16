@@ -13,7 +13,9 @@ echo "=== Knapsack Empirical Comparison: Reproduction Pipeline ==="
 echo ""
 
 echo "Step 0/4: Cleaning up stale outputs..."
-rm -f tables/*.tex tables/*.csv figures/pdf/*.pdf figures/png/*.png figures/svg/*.svg
+rm -f tables/*.tex tables/*.csv \
+    figures/fixed/pdf/*.pdf figures/fixed/png/*.png figures/fixed/svg/*.svg \
+    figures/scaled/pdf/*.pdf figures/scaled/png/*.png figures/scaled/svg/*.svg
 
 echo "Step 1/4: Fixed-capacity experiment (n up to 1000, 100 seeds)..."
 ./build_and_run.sh 20,50,100,200,500,1000 1000 100 42 fixed
@@ -73,4 +75,5 @@ echo "  Raw data:     out/results/full_experiment.csv"
 echo "  Fixed data:   out/results/fixed_experiment.csv"
 echo "  Scaled data:  out/results/scaled_experiment.csv"
 echo "  LaTeX tables: tables/*.tex"
-echo "  Figures:      figures/pdf/*.pdf  figures/png/*.png  figures/svg/*.svg"
+echo "  Figures:      figures/fixed/pdf/*.pdf  figures/fixed/png/*.png  figures/fixed/svg/*.svg"
+echo "                figures/scaled/pdf/*.pdf figures/scaled/png/*.png figures/scaled/svg/*.svg"

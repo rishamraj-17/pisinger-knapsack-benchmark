@@ -14,8 +14,8 @@ This document describes the single, authoritative workflow for reproducing all e
         │                        │                          │
         ▼                        ▼                          ▼
 out/results/               tables/*.tex              Paper draft
-  full_experiment.csv      figures/pdf/*.pdf          LaTeX tables
-         18000 rows        figures/png/*.png
+  full_experiment.csv      figures/fixed/pdf/*.pdf    LaTeX tables
+          18000 rows        figures/scaled/pdf/*.pdf
 ```
 
 ---
@@ -36,19 +36,20 @@ out/results/               tables/*.tex              Paper draft
 ### Using Maven
 
 ```bash
-mvn clean compile exec:java -Dexec.mainClass=Main -Dexec.args="20,50,100,200,500 1000 30 42"
+mvn clean package -q
+java -jar target/knapsack-comparison-2.0.0.jar 20,50,100,200,500 1000 30 42
 ```
 
 ### Using Java directly (after mvn package)
 
 ```bash
-java -jar target/knapsack-comparison-1.0-SNAPSHOT.jar 20,50,100,200,500 1000 30 42
+java -jar target/knapsack-comparison-2.0.0.jar 20,50,100,200,500 1000 30 42
 ```
 
 ### Output
 
 - **File**: `out/results/full_experiment.csv` (canonical CSV, 18000 rows = 3000 instances x 3 algorithms x 2 modes)
-- **Columns**: algorithm, dataset_type, n, capacity, instance_id, seed, time_nanos, time_millis, memory_bytes, memory_mb, solution_value, optimal_value, optimality_gap, nodes_explored, optimal
+- **Columns**: algorithm, dataset_type, n, capacity, instance_id, seed, time_nanos, time_millis, memory_bytes, memory_mb, solution_value, optimal_value, optimality_gap, nodes_explored, nodes_pruned, max_queue_size, optimal, capacity_mode
 
 ---
 
@@ -67,7 +68,7 @@ python3 analyze.py out/results/full_experiment.csv
 - **LaTeX Tables**: `tables/*_table_*.tex` (copy directly into paper, `fixed_` and `scaled_` variants)
 - **CSV Summary**: `tables/*_table_full_summary.csv`
 - **Text Summary**: Printed to stdout
-- **Figures**: `figures/pdf/*.pdf`, `figures/png/*.png`, `figures/svg/*.svg`
+- **Figures**: `figures/fixed/pdf/*.pdf`, `figures/fixed/png/*.png`, `figures/fixed/svg/*.svg` and `figures/scaled/pdf/*.pdf`, `figures/scaled/png/*.png`, `figures/scaled/svg/*.svg`
 
 ### Generated Tables (per capacity mode: `fixed_` and `scaled_` prefix)
 
@@ -101,6 +102,9 @@ python3 analyze.py out/results/full_experiment.csv
 | `pom.xml` | Maven config (mainClass=Main) |
 | `out/results/full_experiment.csv` | Canonical experiment output |
 | `tables/*.tex` | Canonical paper tables |
+
+> **Developer utilities** (not part of the reproduction pipeline):
+> - `update_draft.py` — Synchronizes `paper/draft.md` with current experiment parameters and replaces inline tables with `\input{}` directives. Run after `./reproduce.sh` to refresh the paper draft.
 
 ---
 
@@ -180,5 +184,5 @@ Reduce instances or sizes:
 ### Want to use Maven JAR
 ```bash
 mvn clean package
-java -jar target/knapsack-comparison-1.0-SNAPSHOT.jar 20,50,100,200,500 1000 30 42
+java -jar target/knapsack-comparison-2.0.0.jar 20,50,100,200,500 1000 30 42
 ```

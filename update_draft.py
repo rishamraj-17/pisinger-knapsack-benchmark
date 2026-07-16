@@ -1,3 +1,14 @@
+#!/usr/bin/env python3
+"""
+Developer utility: synchronizes paper/draft.md with the latest experiment
+parameters (instance count, seeds, problem sizes, capacity modes) and
+replaces inline tables with \\input{} directives for auto-generated LaTeX
+tables.
+
+This script is NOT part of the canonical reproduction pipeline.
+Run it after re-running reproduce.sh to keep the paper draft current.
+"""
+
 import re
 import os
 

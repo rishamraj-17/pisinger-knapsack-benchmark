@@ -70,7 +70,7 @@ public final class Main {
         BenchmarkRunner runner = new BenchmarkRunner(generator, algorithms, 1, 30);
         List<Result> results = runner.run();
 
-        Path outputDir = Paths.get("results");
+        Path outputDir = Paths.get("out", "results");
         outputDir.toFile().mkdirs();
         Path output = outputDir.resolve("full_experiment.csv");
 
