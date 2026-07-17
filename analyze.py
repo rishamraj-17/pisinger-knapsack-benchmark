@@ -73,11 +73,7 @@ def bootstrap_median_ci(data, n_bootstrap=10000, confidence=0.95):
     for _ in range(n_bootstrap):
         sample = [data[i] for i in [int(random.random() * n) for _ in range(n)]]
         sample.sort()
-        m = len(sample)
-        if m % 2 == 1:
-            medians.append(sample[m // 2])
-        else:
-            medians.append((sample[m // 2 - 1] + sample[m // 2]) / 2.0)
+        medians.append(sample[len(sample)//2])
     medians.sort()
     alpha = (1 - confidence) / 2
     lower = medians[int(alpha * n_bootstrap)]
@@ -165,8 +161,7 @@ def analyze_dataset(dataset_rows, label, output_prefix):
         gaps = [r.get('gap_pct', 0) for r in greedy_rows if r['dataset_type'] == fam]
         if gaps:
             gaps_sorted = sorted(gaps)
-            m = len(gaps_sorted)
-            med = (gaps_sorted[m // 2 - 1] + gaps_sorted[m // 2]) / 2.0 if m % 2 == 0 else gaps_sorted[m // 2]
+            med = gaps_sorted[len(gaps_sorted)//2]
             mean = statistics.mean(gaps)
             std = statistics.stdev(gaps) if len(gaps) > 1 else 0
             p95 = gaps_sorted[int(0.95 * len(gaps_sorted))]
@@ -188,8 +183,7 @@ def analyze_dataset(dataset_rows, label, output_prefix):
         nodes = [r['nodes_explored'] for r in bb_rows if r['dataset_type'] == fam]
         if nodes:
             nodes_sorted = sorted(nodes)
-            m = len(nodes_sorted)
-            med = (nodes_sorted[m // 2 - 1] + nodes_sorted[m // 2]) / 2.0 if m % 2 == 0 else nodes_sorted[m // 2]
+            med = nodes_sorted[len(nodes_sorted)//2]
             med_ci = bootstrap_median_ci(nodes, n_bootstrap=5000)
             table3_rows.append([family_short[fam], f"{med:.0f} (CI: {med_ci[0]:.0f}–{med_ci[1]:.0f})", f"{min(nodes):.0f}", f"{max(nodes):.0f}"])
         else:

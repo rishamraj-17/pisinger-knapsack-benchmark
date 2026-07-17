@@ -304,6 +304,31 @@ mismatches (node counts, search order, optimal value, termination).
 
 ---
 
+### E14 (Pending) — Fix bootstrap median estimator for even-length arrays
+
+**Source:** Independent scientific audit (this session)  
+**Files:** `analyze.py` (bootstrap_median_ci, greedy gap table, B&B nodes table)  
+
+**Proposed Change:** Replace `sample[len(sample)//2]` (upper-median for even-length arrays)
+with the standard average-of-two-middle-elements formula:
+`(sample[m//2 - 1] + sample[m//2]) / 2.0` when m is even.
+Applied to: `bootstrap_median_ci()` function, greedy gap point estimate, B&B nodes
+point estimate.
+
+**Evidence:** `analyze.py:76` previously used `sample[len(sample)//2]`, which for
+a sorted even-length array returns the upper of the two middle elements rather than
+their average. For n=100 bootstrap samples, the bias is ≤ 0.5 rank positions.
+
+**Verification Required:** This is proposed as an editorial/code-quality fix on the
+assumption that no displayed table values change at 2-decimal precision. However, this
+claim must be experimentally verified. If the regenerated tables/figures are bit-identical,
+it can be marked complete as an editorial fix. If any artifact changes, it must be
+reclassified as a Category B (rerun-required) improvement.
+
+**Completion Status:** Pending verification
+
+---
+
 ## 5. Editorial Fixes Completed
 
 ### E1 — Memory measurement disclaimer (Phase 7, commit 6dfa123)
@@ -502,28 +527,7 @@ Uncorrelated family's value at n=1000; other families range from 0.54 to 0.87.
 A reader cross-referencing the table would otherwise be unable to identify which
 family row the cited trajectory corresponds to.
 
-### E14 — Fix bootstrap median estimator for even-length arrays (Phase 10, independent audit)
 
-**Source:** Independent scientific audit (this session)  
-**Files:** `analyze.py` (bootstrap_median_ci, greedy gap table, B&B nodes table)  
-
-**Change:** Replaced `sample[len(sample)//2]` (upper-median for even-length arrays)
-with the standard average-of-two-middle-elements formula:
-`(sample[m//2 - 1] + sample[m//2]) / 2.0` when m is even.
-Applied to: `bootstrap_median_ci()` function, greedy gap point estimate, B&B nodes
-point estimate.
-
-**Evidence:** `analyze.py:76` previously used `sample[len(sample)//2]`, which for
-a sorted even-length array returns the upper of the two middle elements rather than
-their average. For n=100 bootstrap samples, the bias is ≤ 0.5 rank positions;
-no displayed values change at 2-decimal precision. This is a code quality correction.
-
-**Why no rerun:** No displayed table values change. The bias is sub-resolution at
-the displayed decimal places. The fix is a code quality improvement applied to the
-analysis script; regenerating tables with the corrected script would produce
-numerically identical outputs at the reported precision.
-
----
 
 ## 6. Rejected Reviewer Claims
 
@@ -585,7 +589,7 @@ observations ... not measurements of algorithmic space complexity." Section 9
 | 2026-07-17 | E11 | ACCEPT   | Pruning-rate denominator formula defined in manuscript |
 | 2026-07-17 | E12 | ACCEPT   | Greedy optimality proof formalized with exchange argument |
 | 2026-07-17 | E13 | ACCEPT   | DP scaling trajectory labeled as Uncorrelated family |
-| 2026-07-17 | E14 | ACCEPT   | Bootstrap median estimator corrected for even-length arrays |
+| 2026-07-17 | E14 | PENDING  | Bootstrap median estimator correction pending bit-identical verification |
 
 ---
 
