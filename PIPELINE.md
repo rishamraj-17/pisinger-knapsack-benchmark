@@ -146,7 +146,7 @@ DatasetGenerator (5 families x 6 sizes x 100 seeds = 3000 instances per mode)
 | Total instances | 3,000 per mode (6,000 total) |
 | Algorithms | 3 (Greedy, DP, B&B) |
 | Total runs | 18,000 |
-| Warmup runs | 1 (per-instance) + 10k global JIT iterations per (n, family) |
+| Warmup runs | 1 (per-instance) + 10k global JIT iterations on up to 10 (n, family) pairs per algorithm |
 | Timeout | 30 seconds |
 | Random seed | 42 |
 

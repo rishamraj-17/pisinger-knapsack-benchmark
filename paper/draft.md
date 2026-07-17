@@ -27,13 +27,13 @@ Despite decades of study, *practical* performance under different instance chara
 
 ## 2. Related Work
 
-The 0/1 Knapsack Problem has been studied extensively since the 1950s. Martello and Toth [2] provide the foundational algorithmic treatment, covering DP, B&B, and branch-and-bound variants. Kellerer et al. [3] offer a comprehensive modern survey covering approximation schemes, dynamic programming refinements, and practical heuristics. Korte and Vygen [6] place the knapsack problem within the broader landscape of combinatorial optimization.
+The 0/1 Knapsack Problem has been studied extensively since the 1950s. Martello and Toth [2] provide the foundational algorithmic treatment, covering DP, B&B, and branch-and-bound variants. Kellerer et al. [3] offer a comprehensive modern survey covering approximation schemes, dynamic programming refinements, and practical heuristics. Korte and Vygen [5] place the knapsack problem within the broader landscape of combinatorial optimization.
 
-**Dynamic programming.** The classic O(nW) DP approach dates to Horowitz and Sahni [5], who first formulated the recurrence used in modern implementations. Space-optimized 1D variants reducing memory to O(W) are now standard [2].
+**Dynamic programming.** The classic O(nW) DP approach dates to Horowitz and Sahni [4], who first formulated the recurrence used in modern implementations. Space-optimized 1D variants reducing memory to O(W) are now standard [2].
 
 **Branch and bound.** Martello and Toth [2] developed the strong-formulation B&B that dominates practical solvers. Their LP-relaxation bounding and best-first search strategy remain the baseline for comparison. Pisinger [1] showed that B&B performance varies dramatically with instance structure, motivating our family-by-family analysis.
 
-**Greedy heuristics.** The ratio-based greedy (sort by $v_i/w_i$, pack greedily) is the most studied heuristic. It achieves no constant-factor worst-case guarantee for 0/1 knapsack [2], yet performs well in practice on many instance types. Ibarra and Kim [7] introduced a fully polynomial-time approximation scheme (FPTAS) that achieves a $(1-\epsilon)$ approximation for the 0/1 knapsack problem.
+**Greedy heuristics.** The ratio-based greedy (sort by $v_i/w_i$, pack greedily) is the most studied heuristic. It achieves no constant-factor worst-case guarantee for 0/1 knapsack [2], yet performs well in practice on many instance types. Ibarra and Kim [6] introduced a fully polynomial-time approximation scheme (FPTAS) that achieves a $(1-\epsilon)$ approximation for the 0/1 knapsack problem.
 
 **Instance hardness.** Pisinger [1] introduced the five instance families used here (Uncorrelated through Almost Equal Ratios), demonstrating that instance correlation—not just size—determines practical hardness. This framework has been adopted by subsequent empirical studies [2, 3]. Our work extends this line by systematically comparing three algorithms on a unified benchmark across all five families.
 
@@ -83,7 +83,7 @@ Parameters: $n \in \{20, 50, 100, 200, 500, 1000\}$, $W = 1000 (fixed) and W = 0
 ## 5. Experimental Setup
 
 - **Language**: Java 17
-- **JVM**: Global JIT warmup (10,000 iterations per algorithm-family pair) plus 1 warmup run per instance, then measured run
+- **JVM**: Global JIT warmup (10,000 iterations on up to 10 distinct (n, family) configurations per algorithm) plus 1 warmup run per instance, then measured run
 - **Timeout**: 30s per instance per algorithm (with 50M node safety cap in B&B)
 - **Metrics**: Wall time (ns), heap memory (MB), solution value, optimality gap (greedy), B&B nodes explored
 - **Hardware**: Single thread, Intel/AMD x64, Linux
@@ -98,6 +98,8 @@ Parameters: $n \in \{20, 50, 100, 200, 500, 1000\}$, $W = 1000 (fixed) and W = 0
 
 \input{tables/fixed_table_time_max_n}
 \input{tables/scaled_table_time_max_n}
+
+*Note on B&B means:* For configurations where B&B instances hit the 50M node safety cap, the arithmetic mean includes each instance's recorded runtime at the moment the cap was reached. This right-censors the runtime distribution: the true mean completion time is systematically higher than the reported value. The median remains unaffected where fewer than 50% of runs are capped (all fixed-mode cells; see Section 9 for per-configuration censoring rates) and is the preferred summary for B&B's heavy-tailed runtimes.
 
 **Greedy runtime analysis.** Greedy execution is dominated by sorting the items by $v_i/w_i$, which contributes O(n log n) to the total cost. The subsequent greedy selection pass is O(n) and executes in constant time per item (a single comparison and conditional pack). The observed variation across families (0.13–0.20 ms) reflects a secondary effect: families where $v_i/w_i$ ratios are well-separated (Inverse Correlated, Equal Ratios) produce fewer comparison swaps in the sort, while families with clustered ratios (Weakly Correlated) require more comparisons. At n=1000, sorting dominates total runtime; the family-dependent variation is noise at the sort level, not in the greedy selection itself.
 
@@ -153,7 +155,7 @@ Parameters: $n \in \{20, 50, 100, 200, 500, 1000\}$, $W = 1000 (fixed) and W = 0
 
 - **Equal Ratios** (503 median nodes): Nearly identical ratios create degenerate fractional solutions where many items can be swapped without changing the bound value. The bound is moderately loose — not as bad as Strongly Correlated but worse than Uncorrelated. The bound produces enough pruning to keep node counts manageable, but the degeneracy increases variance (max 163,987 nodes).
 
-**Pruning effectiveness.** The pruning analysis (Table 6, pooling all problem sizes n=20 to n=1000) quantifies the bound-tightness mechanism directly. Uncorrelated instances achieve the highest pruning rate at the median (7.3%), confirming that the tight bound rapidly eliminates suboptimal branches. Inverse Correlated instances pruned only 0.5% of nodes at the median, confirming the bound provides almost no pruning signal. Strongly Correlated (1.7%) and Equal Ratios (2.1%) show intermediate pruning consistent with their moderate bound looseness. Pruning rates vary with problem size; the pooled values provide an aggregate comparison across families.
+**Pruning effectiveness.** The pruning analysis (Table 6, pooling all problem sizes n=20 to n=1000) quantifies the bound-tightness mechanism directly. The pruning rate per instance is defined as $\text{nodes\_pruned} / (\text{nodes\_explored} + \text{nodes\_pruned})$, where nodes\_explored counts all nodes polled from the priority queue and nodes\_pruned counts those immediately discarded (bound $\leq$ incumbent); the table reports the median of this ratio across all instances and sizes. Uncorrelated instances achieve the highest pruning rate at the median (7.3%), confirming that the tight bound rapidly eliminates suboptimal branches. Inverse Correlated instances pruned only 0.5% of nodes at the median, confirming the bound provides almost no pruning signal. Strongly Correlated (1.7%) and Equal Ratios (2.1%) show intermediate pruning consistent with their moderate bound looseness. Pruning rates vary with problem size; the pooled values provide an aggregate comparison across families.
 
 **Node growth rates.** The per-size data reveals distinct scaling regimes. Uncorrelated nodes grow sublinearly with n (29 → 1,044 over a 50x n increase), suggesting the bound tightens as n increases — more items provide more opportunities for the fractional solution to approximate the integer optimum. Inverse Correlated nodes grow super-exponentially (40 → 923,740), consistent with the bound quality degrading as the ratio structure becomes more extreme with more items. Strongly Correlated shows intermediate growth (486 → 5,156, approximately $n^{0.60}$), reflecting persistent bound looseness that scales polynomially.
 
@@ -163,6 +165,8 @@ Parameters: $n \in \{20, 50, 100, 200, 500, 1000\}$, $W = 1000 (fixed) and W = 0
 
 \input{tables/fixed_table_bb_time}
 \input{tables/scaled_table_bb_time}
+
+*Table note:* Capped instances (those hitting the 50M node limit) are included with their recorded runtime. The mean in affected cells is therefore a lower-bound estimate of the true completion-time mean. The median and its bootstrap CI are the preferred summary statistics for these configurations (see Section 9 for per-cell censoring rates).
 
 **Runtime-node correspondence.** The runtime hierarchy (Uncorrelated < Weakly < Strongly < Equal Ratios < Inverse Correlated) mirrors the node count hierarchy (Table 3), confirming that search tree size — not per-node overhead — dominates B&B runtime. Each node requires one fractional knapsack computation (O(n log n) for sorting, though items can be pre-sorted once) and one heap insertion/extraction (O(log |queue|)). At n=1000, the per-node cost is dominated by the fractional packing, which involves iterating through remaining items. The 0.30 ms median on Uncorrelated (1,044 nodes) implies approximately 0.29 μs per node, while the 87.48 ms median on Inverse Correlated (923,740 nodes) implies approximately 0.09 μs per node — the per-node cost is lower on Inverse Correlated because the bound is computed fewer times before pruning, and the priority queue operations dominate.
 
@@ -193,7 +197,7 @@ The theoretical space complexities differ: DP uses O(W) for the DP table, B&B qu
 
 We estimate empirical growth rates from the median measurements (Tables 1, 3, 5) and compare them against theoretical complexity predictions.
 
-**DP: theoretical O(nW), observed O(n).** With W=1000 fixed, the theoretical complexity predicts linear scaling in n. The observed mean times (n=20: 0.02 ms, n=1000: 0.87 ms) yield an empirical ratio of 43.5x for a 50x increase in n, corresponding to a fitted exponent of approximately 0.99 on a log-log plot. The near-unit exponent confirms that DP's runtime is dominated by the O(nW) loop with negligible constant overhead at these scales. This is consistent with O(n) scaling at fixed W, confirming the theoretical prediction.
+**DP: theoretical O(nW), observed O(n).** With W=1000 fixed, the theoretical complexity predicts linear scaling in n. The observed mean times (Uncorrelated family: n=20: 0.02 ms, n=1000: 0.87 ms) yield an empirical ratio of 43.5x for a 50x increase in n, corresponding to a fitted exponent of approximately 0.99 on a log-log plot. The near-unit exponent confirms that DP's runtime is dominated by the O(nW) loop with negligible constant overhead at these scales. This is consistent with O(n) scaling at fixed W, confirming the theoretical prediction.
 
 **Greedy: theoretical O(n log n), observed approximately O(n).** Mean times scale from 0.01 ms (n=20) to 0.17 ms (n=1000), a 28x increase for 50x n — fitted exponent approximately 0.85. The observed exponent below 1.0 reflects that the O(n) selection pass contributes a fixed per-item cost, while the O(n log n) sorting overhead grows sublinearly at these scales. Sorting accounts for the majority of runtime; the greedy selection pass is O(n) and negligible.
 
@@ -240,7 +244,7 @@ The experimental results yield scenario-specific algorithm recommendations:
 
 ### 7.2 Why Greedy is Optimal on Inverse Correlated
 
-The optimality of Greedy on Inverse Correlated instances is a mathematical consequence of the value-weight structure, not an empirical coincidence. When $v_i + w_i = C$ (constant), the ratio $v_i/w_i = C/w_i - 1$ is strictly decreasing in $w_i$. Greedy sorts by ratio descending, which is equivalent to sorting by weight ascending. For this specific structure, selecting items in ascending weight order always produces an optimal packing: lighter items have both higher ratio *and* higher value density, so there is no conflict between the local greedy criterion and the global optimum. This is a known result in the knapsack literature [2, 3], but our experiments confirm it empirically at all tested scales (n = 20 to 1000, 100 seeds per configuration).
+The optimality of Greedy on Inverse Correlated instances is a mathematical consequence of the value-weight structure, not an empirical coincidence. When $v_i + w_i = C$ (constant), the ratio $v_i/w_i = C/w_i - 1$ is strictly decreasing in $w_i$. Greedy sorts by ratio descending, which is equivalent to sorting by weight ascending. For this specific structure, selecting items in ascending weight order always produces an optimal packing: lighter items have both higher ratio *and* higher value density, so there is no conflict between the local greedy criterion and the global optimum. Formally, any feasible solution that includes a heavier item $j$ while excluding a lighter item $i$ (with $w_i < w_j$ and therefore $v_i = C - w_i > C - w_j = v_j$) can be strictly improved by replacing $j$ with $i$: item $i$ contributes more value, weighs less, and cannot violate the capacity constraint if $j$ was feasible. This exchange argument shows that greedy selection in ascending weight order dominates any other selection, establishing global optimality. This is a known result in the knapsack literature [2, 3], but our experiments confirm it empirically at all tested scales (n = 20 to 1000, 100 seeds per configuration).
 
 The practical implication is significant: practitioners who can identify inverse correlation in their data (e.g., items where value and weight are complementary) can use Greedy with confidence that the solution is optimal — achieving O(n log n) performance with zero quality loss.
 
@@ -252,7 +256,7 @@ On Inverse Correlated instances, the bound degrades through a specific mechanism
 
 1. Heavy items (high $w_i$) have very low $v_i/w_i$ ratios. In the fractional solution, they are packed last (or not at all).
 2. Light items (low $w_i$) have very high ratios. They are packed first, consuming capacity quickly.
-3. The fractional solution packs many light items fractionally, achieving a bound value that substantially exceeds what any integer packing can achieve.
+3. The fractional solution packs many light items entirely (the remaining capacity may be filled by a fraction of the next item), achieving a bound value that substantially exceeds what any integer packing can achieve.
 4. The resulting bound gap (fractional optimum minus integer optimum) is large, so the algorithm cannot prune branches that might contain better integer solutions.
 
 This mechanism explains the observed node growth: from 40 nodes at n=20 to 923,740 at n=1000 (a 23,094x increase). As n increases, the number of light items grows, the fractional solution becomes increasingly optimistic, and the bound provides progressively less pruning signal. The worst-case instances reach 50M nodes (the internal safety cap) because the bound essentially fails — every branch of the search tree has a bound exceeding the best integer solution, so nothing is pruned until the optimal solution is found by exhaustive enumeration.
@@ -304,9 +308,11 @@ This study systematically compared three classical 0/1 knapsack algorithms — G
 
 ## 9. Threats to Validity
 
-Following Wohlin et al. [8], we categorize threats to the validity of this study.
+Following Wohlin et al. [7], we categorize threats to the validity of this study.
 
-**Internal validity.** The experimental pipeline is deterministic: instances are generated from seeded PRNGs (seed 42), algorithms execute single-threaded with a global JIT warmup (10,000 iterations per algorithm-family combination) plus 1 per-instance warmup run, and all statistical computations use `random.seed(42)`. This eliminates run-to-run variability as a confounding factor. A 50M node safety cap in the B&B implementation was triggered on certain instances: in fixed capacity mode, 5 Inverse Correlated instances at n=1000; in scaled capacity mode, 192 instances across Strongly Correlated (68: 11 at n=500, 57 at n=1000), Inverse Correlated (115: 40 at n=500, 75 at n=1000), and Almost Equal Ratios (9 at n=1000). The 30-second thread-level timeout was never reached (max observed runtime ~9s in fixed mode, ~18s in scaled mode). Instances hitting the node cap are correctly marked as non-optimal, and the reported B&B statistics include all instances (capped and non-capped) as produced by the analysis pipeline (Tables 3, 4, 6).
+**Internal validity.** The experimental pipeline is deterministic: instances are generated from seeded PRNGs (seed 42), algorithms execute single-threaded with a global JIT warmup (10,000 iterations per algorithm-family combination) plus 1 per-instance warmup run, and all statistical computations use `random.seed(42)`. This eliminates run-to-run variability as a confounding factor. A 50M node safety cap in the B&B implementation was triggered on certain instances: in fixed capacity mode, 5 Inverse Correlated instances at n=1000 (5% of 100); in scaled capacity mode, 192 instances across Strongly Correlated (68: 11 at n=500, 57 at n=1000), Inverse Correlated (115: 40 at n=500, 75 at n=1000), and Almost Equal Ratios (9 at n=1000). The 30-second thread-level timeout was never reached (max observed runtime ~9s in fixed mode, ~18s in scaled mode). Instances hitting the node cap are correctly marked as non-optimal, and the reported B&B statistics include all instances (capped and non-capped) as produced by the analysis pipeline (Tables 1, 3, 4, 6).
+
+Because capped instances are included using their recorded runtime at the moment the cap was reached rather than their unknown true completion time, the arithmetic mean for affected cells is a right-censored estimate: it systematically understates the true average runtime to completion. This right-censoring primarily affects the mean; the median remains a valid summary whenever fewer than half the runs in a cell are capped. The per-cell censoring rates are: fixed mode Inverse Correlated n=1000 (5%) — median unaffected; scaled mode Strongly Correlated n=500 (11%), Inverse Correlated n=500 (40%), and Almost Equal Ratios n=1000 (9%) — median unaffected; scaled mode Strongly Correlated n=1000 (57%) and Inverse Correlated n=1000 (75%) — median is itself a lower bound because the majority of runs are capped. For these two cells, all reported central tendency statistics are conservative estimates. The median remains the principal runtime statistic used throughout the B&B discussion (Sections 6.1, 6.3, 6.4) and is valid for all configurations where B&B performance is compared, with the caveat noted above for the two scaled-mode cells.
 
 **Construct validity.** We measure wall-clock time (nanosecond precision via `System.nanoTime()`), heap memory (via `Runtime.getRuntime()`), solution value, and B&B node count. Wall-clock time captures the full cost including JVM overhead but may be affected by garbage collection pauses; the JIT warmup protocol reduces compilation artifacts. Memory measurements reflect JVM heap usage rather than algorithmic memory complexity, which limits their interpretability (Section 6.6). The optimality gap is computed relative to DP solutions, which are exact by construction for the tested parameter ranges.
 
@@ -324,13 +330,13 @@ Following Wohlin et al. [8], we categorize threats to the validity of this study
 
 [3] Kellerer, H., Pferschy, U., & Pisinger, D. (2004). *Knapsack Problems*. Springer.
 
-[5] Horowitz, E., & Sahni, S. (1974). Computing Partitions with Applications to the Knapsack Problem. *Journal of the ACM*, 21(2), 277-292.
+[4] Horowitz, E., & Sahni, S. (1974). Computing Partitions with Applications to the Knapsack Problem. *Journal of the ACM*, 21(2), 277-292.
 
-[6] Korte, B., & Vygen, J. (2018). *Combinatorial Optimization: Theory and Algorithms* (6th ed.). Springer.
+[5] Korte, B., & Vygen, J. (2018). *Combinatorial Optimization: Theory and Algorithms* (6th ed.). Springer.
 
-[7] Ibarra, H. R., & Kim, C. E. (1975). Fast Approximation for the Knapsack and Sum Subset Problems. *Journal of the ACM*, 22(4), 463-473.
+[6] Ibarra, H. R., & Kim, C. E. (1975). Fast Approximation for the Knapsack and Sum Subset Problems. *Journal of the ACM*, 22(4), 463-473.
 
-[8] Wohlin, C., Runeson, P., Host, M., Ohlsson, M. C., Regnell, B., & Wesslen, A. (2012). *Experimentation in Software Engineering*. Springer.
+[7] Wohlin, C., Runeson, P., Host, M., Ohlsson, M. C., Regnell, B., & Wesslen, A. (2012). *Experimentation in Software Engineering*. Springer.
 
 ---
 

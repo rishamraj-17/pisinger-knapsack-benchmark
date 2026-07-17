@@ -10,21 +10,23 @@ A reproducible empirical study comparing three classical 0/1 knapsack algorithms
 ## Quick Start
 
 ```bash
-# Full reproduction: experiment + analysis (~2 minutes, 18,000 runs)
+# Full reproduction: 18,000 algorithm runs, all tables and figures
 ./reproduce.sh
 ```
 
-This runs the full benchmark (3,000 instances x 3 algorithms x 2 capacity modes = 18,000 algorithm runs) and generates all tables and figures.
+This runs the full benchmark (6 n-values x 5 families x 100 seeds = 3,000 instances per mode, 2 modes, 3 algorithms = 18,000 algorithm runs) and generates all tables and figures.
 
 ### Step by Step
 
 ```bash
-# 1. Build and run the experiment
-./build_and_run.sh 20,50,100,200,500 1000 30 42
+# Build and run the experiment  (see reproduce.sh for full pipeline)
+./build_and_run.sh 20,50,100,200,500 1000 30 42 fixed
 
-# 2. Generate LaTeX tables and publication figures
+# Generate LaTeX tables and publication figures
 python3 analyze.py out/results/full_experiment.csv
 ```
+
+The full 18,000-run reproduction requires two experiment runs (fixed and scaled capacity, 6 n-values, 100 seeds each) with a combine step. Use `./reproduce.sh` for the complete pipeline. See `PIPELINE.md` for the full provenance chain.
 
 ### Custom Parameters
 
