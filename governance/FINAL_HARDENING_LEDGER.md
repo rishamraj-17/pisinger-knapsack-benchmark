@@ -527,7 +527,32 @@ Uncorrelated family's value at n=1000; other families range from 0.54 to 0.87.
 A reader cross-referencing the table would otherwise be unable to identify which
 family row the cited trajectory corresponds to.
 
+### E16 — Added missing Table 6 inputs (Phase 11, Editorial Hardening)
 
+**Source:** Final editorial consistency audit  
+**File:** `paper/draft.md` (Section 6.3)  
+
+**Change:** Added `\input{tables/fixed_table_bb_pruning}` and
+`\input{tables/scaled_table_bb_pruning}` before the pruning analysis text.
+Table 6 was referenced at line 159 but its `\input` commands were missing,
+unlike Tables 1–5 which all have explicit inputs. The table files existed at
+`tables/*_table_bb_pruning.tex` but were never included in the manuscript.
+
+**Evidence:** All other tables (1–5) have `\input` commands in draft.md at their
+point of reference. Table 6 was the only table referenced without a corresponding
+`\input`. The table files existed and were correct.
+
+### E17 — Removed extra blank line (Phase 11, Editorial Hardening)
+
+**Source:** Final editorial consistency audit  
+**File:** `paper/draft.md` (§6.7/§6.8 boundary)  
+
+**Change:** Removed a double blank line between the horizontal rule after §6.7
+and the §6.8 heading.
+
+**Evidence:** The original had two blank lines between `---` and `### 6.8 DP
+Scaling: Fixed vs Scaled Capacity`. Standard markdown convention uses one blank
+line after a horizontal rule.
 
 ## 6. Rejected Reviewer Claims
 
@@ -590,10 +615,36 @@ observations ... not measurements of algorithmic space complexity." Section 9
 | 2026-07-17 | E12 | ACCEPT   | Greedy optimality proof formalized with exchange argument |
 | 2026-07-17 | E13 | ACCEPT   | DP scaling trajectory labeled as Uncorrelated family |
 | 2026-07-17 | E14 | PENDING  | Bootstrap median estimator correction pending bit-identical verification |
+| 2026-07-18 | E16 | ACCEPT   | Missing Table 6 \input commands added to draft.md |
+| 2026-07-18 | E17 | ACCEPT   | Extra blank line removed between §6.7 and §6.8 |
+| 2026-07-18 | —   | COMPLETE | Editorial Hardening phase completed. No remaining editorial issues. Manuscript is editorially frozen pending R1, R2, E14 implementation/verification. |
 
----
+## 8. Editorial Hardening Phase Completion
 
-## 8. Future Review Workflow
+This ledger entry confirms the Editorial Hardening phase is complete.
+
+**Phase scope:** Final editorial polish of `paper/draft.md` only. No scientific
+claims, numerical values, benchmark artifacts, or implementation code were
+modified.
+
+**Changes applied during this phase:**
+- E16: Added missing `\input` commands for Table 6 (pruning tables)
+- E17: Removed extra blank line at §6.7/§6.8 boundary
+
+**Verification:** Full manuscript re-read confirmed:
+- No scientific conclusions changed
+- No numerical results changed
+- No benchmark artifacts changed
+- No implementation work was performed
+- Grammar, spelling, internal consistency, scientific wording, writing quality,
+  reproducibility wording, abstract, and conclusion all verified clean
+
+**Remaining unresolved items (require benchmark rerun):**
+- R1 (Pending) - floor(bound) pruning optimization
+- R2 (Pending) - prefix-sum bound acceleration
+- E14 (Pending verification) - bootstrap median estimator correction
+
+## 9. Future Review Workflow
 
 Every new reviewer criticism must be classified into exactly one category
 before any action is taken.
