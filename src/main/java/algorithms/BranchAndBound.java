@@ -42,6 +42,12 @@ public final class BranchAndBound implements Algorithm {
 
     @Override
     public Result solve(KnapsackInstance instance) {
+        return solve(instance, null);
+    }
+
+    // Called from BbInstrumentationRunner with non-null stats.
+    // When stats is null, behaviour is identical to the original solve().
+    public Result solve(KnapsackInstance instance, BbInstrumentation stats) {
         long startMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
         long startTime = System.nanoTime();
 
@@ -62,6 +68,14 @@ public final class BranchAndBound implements Algorithm {
         PriorityQueue<Node> pq = new PriorityQueue<>();
         double rootBound = fractionalBound(0, 0, 0, sorted, capacity, n, prefixWeight, prefixValue);
         pq.add(new Node(0, 0, 0, rootBound));
+        if (stats != null) {
+            stats.setInstanceId(instance.getId());
+            stats.setN(n);
+            stats.setFamily(instance.getFamilyName());
+            stats.setCapacity(capacity);
+            stats.setSeed(instance.getBaseSeed());
+            stats.recordGenerated();
+        }
 
         int bestValue = 0;
         long nodesExplored = 0;
@@ -80,12 +94,20 @@ public final class BranchAndBound implements Algorithm {
 
             Node node = pq.poll();
             nodesExplored++;
+            if (stats != null) {
+                stats.recordNodeExplored(node.level, node.bound, bestValue, pq.size());
+            }
 
             if (Math.floor(node.bound) <= bestValue) {
                 nodesPruned++;
+                if (stats != null) stats.recordPruneByBound();
                 continue;
             }
-            if (node.level >= n) continue;
+            if (node.level >= n) {
+                if (stats != null) stats.recordLeaf();
+                continue;
+            }
+            if (stats != null) stats.recordInternal();
 
             int nextLevel = node.level + 1;
             Item nextItem = sorted[node.level];
@@ -93,23 +115,37 @@ public final class BranchAndBound implements Algorithm {
             int includeWeight = node.weight + nextItem.getWeight();
             int includeValue = node.value + nextItem.getValue();
             if (includeWeight <= capacity && includeValue > bestValue) {
+                int oldBest = bestValue;
                 bestValue = includeValue;
+                if (stats != null) stats.recordImprovement(nextLevel, oldBest, bestValue);
             }
             if (includeWeight <= capacity) {
                 double bound = fractionalBound(nextLevel, includeValue, includeWeight, sorted, capacity, n, prefixWeight, prefixValue);
                 if (Math.floor(bound) > bestValue && nodesExplored < MAX_NODES) {
                     pq.add(new Node(nextLevel, includeValue, includeWeight, bound));
+                    if (stats != null) { stats.recordLeftBranch(); stats.recordGenerated(); }
+                } else if (stats != null) {
+                    stats.recordSkippedLeftBound();
                 }
+            } else if (stats != null) {
+                stats.recordSkippedLeftInfeasible();
             }
 
             double excludeBound = fractionalBound(nextLevel, node.value, node.weight, sorted, capacity, n, prefixWeight, prefixValue);
             if (Math.floor(excludeBound) > bestValue && nodesExplored < MAX_NODES) {
                 pq.add(new Node(nextLevel, node.value, node.weight, excludeBound));
+                if (stats != null) { stats.recordRightBranch(); stats.recordGenerated(); }
+            } else if (stats != null) {
+                stats.recordSkippedRightBound();
             }
 
             if (pq.size() > maxQueueSize) {
                 maxQueueSize = pq.size();
             }
+        }
+
+        if (stats != null && !searchCompleted) {
+            stats.recordPruneByCap();
         }
 
         long timeNanos = System.nanoTime() - startTime;
