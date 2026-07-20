@@ -12,6 +12,10 @@ public final class DynamicProgramming implements Algorithm {
 
     @Override
     public Result solve(KnapsackInstance instance) {
+        return solve(instance, null);
+    }
+
+    public Result solve(KnapsackInstance instance, DpInstrumentation stats) {
         long startMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
         long startTime = System.nanoTime();
 
@@ -21,6 +25,14 @@ public final class DynamicProgramming implements Algorithm {
 
         int[] dp = new int[capacity + 1];
 
+        if (stats != null) {
+            stats.setInstanceId(instance.getId());
+            stats.setN(n);
+            stats.setFamily(instance.getFamilyName());
+            stats.setCapacity(capacity);
+            stats.setSeed(instance.getBaseSeed());
+        }
+
         for (int i = 0; i < n; i++) {
             if (Thread.currentThread().isInterrupted()) {
                 throw new RuntimeException("DynamicProgramming interrupted");
@@ -29,10 +41,15 @@ public final class DynamicProgramming implements Algorithm {
             int v = items[i].getValue();
             for (int wCap = capacity; wCap >= w; wCap--) {
                 int newVal = dp[wCap - w] + v;
+                if (stats != null) stats.recordTransition(newVal, dp[wCap]);
                 if (newVal > dp[wCap]) {
                     dp[wCap] = newVal;
                 }
             }
+        }
+
+        if (stats != null) {
+            stats.finalizeStats(dp);
         }
 
         int optimalValue = dp[capacity];
