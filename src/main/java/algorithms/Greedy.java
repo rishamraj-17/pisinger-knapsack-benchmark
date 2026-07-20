@@ -15,6 +15,10 @@ public final class Greedy implements Algorithm {
 
     @Override
     public Result solve(KnapsackInstance instance) {
+        return solve(instance, null);
+    }
+
+    public Result solve(KnapsackInstance instance, GreedyInstrumentation stats) {
         long startMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
         long startTime = System.nanoTime();
 
@@ -24,17 +28,31 @@ public final class Greedy implements Algorithm {
         Item[] sorted = items.clone();
         Arrays.sort(sorted, Comparator.comparingDouble(Item::getRatio).reversed());
 
+        if (stats != null) {
+            stats.setInstanceId(instance.getId());
+            stats.setN(instance.getN());
+            stats.setFamily(instance.getFamilyName());
+            stats.setCapacity(capacity);
+            stats.setSeed(instance.getBaseSeed());
+        }
+
         int totalValue = 0;
         int totalWeight = 0;
-        for (Item item : sorted) {
+        for (int i = 0; i < sorted.length; i++) {
+            Item item = sorted[i];
             if (Thread.currentThread().isInterrupted()) {
                 throw new RuntimeException("Greedy interrupted");
             }
             if (totalWeight + item.getWeight() <= capacity) {
                 totalWeight += item.getWeight();
                 totalValue += item.getValue();
+                if (stats != null) stats.recordSelection(i);
+            } else {
+                if (stats != null) stats.recordSkip(i);
             }
         }
+
+        if (stats != null) stats.finalize(totalWeight);
 
         long timeNanos = System.nanoTime() - startTime;
         long endMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
