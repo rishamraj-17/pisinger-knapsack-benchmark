@@ -262,6 +262,24 @@ def compute_per_algorithm_correlation(
     return result
 
 
+def verify_fractional_logit_response(
+    y: np.ndarray,
+    name: str = "response",
+) -> dict:
+    result = {
+        "name": name,
+        "n": len(y),
+        "min": float(y.min()),
+        "max": float(y.max()),
+        "n_below_zero": int(np.sum(y < 0)),
+        "n_above_one": int(np.sum(y > 1)),
+        "n_at_zero": int(np.sum(y == 0)),
+        "n_at_one": int(np.sum(y == 1)),
+        "all_in_unit_interval": bool(np.all((y >= 0) & (y <= 1))),
+    }
+    return result
+
+
 def check_dp_composition(
     df: pd.DataFrame,
 ) -> dict:
