@@ -96,3 +96,4 @@ See [`CITATION.cff`](CITATION.cff) for a machine-readable citation.
 ## License
 
 [MIT](LICENSE)
+
