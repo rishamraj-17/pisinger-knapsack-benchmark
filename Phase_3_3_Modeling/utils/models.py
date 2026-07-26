@@ -277,3 +277,89 @@ def bootstrap_delta_r2(
     ci_lower = float(np.percentile(delta_r2_values, 2.5))
     ci_upper = float(np.percentile(delta_r2_values, 97.5))
     return delta_r2_values, (ci_lower, ci_upper)
+
+
+from sklearn.linear_model import LogisticRegressionCV, LogisticRegression
+
+def fit_elasticnet(X_train: pd.DataFrame, y_train: np.ndarray, alpha: float = 0.5, cv_folds: int = 5) -> LogisticRegression:
+    cv_model = LogisticRegressionCV(
+        Cs=50,
+        penalty='elasticnet',
+        solver='saga',
+        l1_ratios=[alpha],
+        cv=cv_folds,
+        random_state=42,
+        max_iter=5000,
+        scoring='neg_log_loss',
+        n_jobs=-1
+    )
+    cv_model.fit(X_train.astype(float), y_train.astype(float))
+    
+    class_label = list(cv_model.scores_.keys())[0]
+    scores = cv_model.scores_[class_label].squeeze(axis=2) if cv_model.scores_[class_label].ndim == 3 else cv_model.scores_[class_label]
+    deviance = -2 * scores
+    
+    mean_deviance = deviance.mean(axis=0)
+    se_deviance = deviance.std(axis=0, ddof=1) / np.sqrt(cv_folds)
+    
+    min_idx = np.argmin(mean_deviance)
+    min_dev = mean_deviance[min_idx]
+    threshold = min_dev + se_deviance[min_idx]
+    
+    Cs = cv_model.Cs_
+    valid_indices = np.where(mean_deviance <= threshold)[0]
+    best_c_idx = valid_indices[np.argmin(Cs[valid_indices])]
+    best_c = Cs[best_c_idx]
+    
+    final_model = LogisticRegression(
+        C=best_c,
+        penalty='elasticnet',
+        solver='saga',
+        l1_ratio=alpha,
+        random_state=42,
+        max_iter=5000
+    )
+    final_model.fit(X_train.astype(float), y_train.astype(float))
+    
+    final_model.cv_model_ = cv_model
+    final_model.best_c_ = best_c
+    
+    return final_model
+
+def predict_elasticnet(model: LogisticRegression, X_test: pd.DataFrame) -> np.ndarray:
+    return model.predict_proba(X_test.astype(float))[:, 1]
+
+def elasticnet_lambda_path(model: LogisticRegression) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    cv_model = model.cv_model_
+    class_label = list(cv_model.scores_.keys())[0]
+    scores = cv_model.scores_[class_label].squeeze(axis=2) if cv_model.scores_[class_label].ndim == 3 else cv_model.scores_[class_label]
+    deviance = -2 * scores
+    mean_deviance = deviance.mean(axis=0)
+    se_deviance = deviance.std(axis=0, ddof=1) / np.sqrt(scores.shape[0])
+    return cv_model.Cs_, mean_deviance, se_deviance
+
+def fit_hurdle(X: pd.DataFrame, y: np.ndarray) -> Dict:
+    y_bin = (y > 0).astype(int)
+    part1 = LogisticRegression(penalty=None, solver='lbfgs', max_iter=5000, random_state=42)
+    part1.fit(X.astype(float), y_bin)
+    
+    pos_mask = y > 0
+    X_pos = X[pos_mask]
+    y_pos = y[pos_mask]
+    
+    X_with_const = sm.add_constant(X_pos.astype(float), prepend=True, has_constant='add')
+    part2 = sm.GLM(
+        y_pos.astype(float),
+        X_with_const,
+        family=sm.families.Binomial(),
+        cov_type='HC3'
+    ).fit(maxiter=100, disp=False)
+    
+    return {'part1': part1, 'part2': part2}
+
+def predict_hurdle(model: Dict, X: pd.DataFrame) -> np.ndarray:
+    p_pos = model['part1'].predict_proba(X.astype(float))[:, 1]
+    X_with_const = sm.add_constant(X.astype(float), prepend=True, has_constant='add')
+    e_pos = model['part2'].predict(X_with_const).values
+    return p_pos * e_pos
+

@@ -1,0 +1,11 @@
+predictor,r2_full,r2_without,delta_r2,rank_by_perm_importance
+max_depth,1.0,1.0,0.0,1
+improvement_count,1.0,1.0,0.0,2
+final_queue_size,1.0,1.0,0.0,3
+pruned_by_bound,1.0,1.0,0.0,4
+left_branches,1.0,1.0,0.0,5
+mean_queue_size,1.0,1.0,0.0,6
+explored_children,1.0,1.0,0.0,7
+skipped_infeasible,1.0,1.0,0.0,8
+right_branches,1.0,1.0,0.0,9
+skipped_children,1.0,1.0,0.0,10

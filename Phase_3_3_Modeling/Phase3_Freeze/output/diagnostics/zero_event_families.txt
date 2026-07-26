@@ -1,0 +1,2 @@
+Uncorrelated
+WeaklyCorrelated

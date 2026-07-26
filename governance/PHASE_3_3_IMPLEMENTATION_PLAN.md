@@ -425,8 +425,9 @@ two-part hurdle for `solution_gap`.
    - For each LOFO fold:
      a. Determine if held-out family has any `optimal=False` events
      b. Training set: perform internal 5-fold CV for λ selection (§8.4)
-        - Use 1-SE rule (simplest model within 1 SE of min deviance)
-     c. Refit on full training set at selected λ
+        - Use sklearn's `LogisticRegressionCV` with `Cs=50` (or `Cs=100` if λ varies widely)
+        - Extract the CV paths (`scores_`) to manually compute the 1-SE rule (simplest model within 1 SE of min deviance)
+     c. Refit on full training set at selected λ using a standard `LogisticRegression`
      d. Predict on held-out fold
      e. Compute metrics:
         - AUC-ROC (if held-out fold has ≥ 1 event)
@@ -462,8 +463,8 @@ two-part hurdle for `solution_gap`.
    - Combined hurdle prediction:
      - E[gap] = P(gap>0) × E[gap | gap>0]
      - Overall RMSE, MAE across all 6,000 rows
-   - Explicitly note: second-stage EPV ≈ 197 / 19 ≈ 10.4; caveat:
-     this is a descriptive supplement, not formal inference
+   - Explicitly note: second-stage EPV ≈ 197 / 61 ≈ 3.23 (denominator includes both M1 and M2 predictors); caveat:
+     this is a descriptive supplement, not formal inference. The model remains unregularised as specified.
 
 **Outputs:**
 - `output/results/elasticnet_metrics.csv`
@@ -890,7 +891,7 @@ LaTeX tables and summary.
 | Diagnostics | No dedicated §11 subsection; use logistic diagnostics (calibration) for part 1 and fractional logit diagnostics (§11.2) for part 2 |
 | Validation | LOFO CV for each part separately. Combined prediction evaluated on all 6,000 rows |
 | Key outputs | Part 1: AUC, Brier. Part 2: pseudo-R² on gap>0 subset. Combined: RMSE, MAE across all rows |
-| Special notes | Supplementary — descriptive only. Second-stage sample: n=197, EPV ≈ 10.4. Explicitly caveat limited power |
+| Special notes | Supplementary — descriptive only. Second-stage sample: n=197, EPV ≈ 3.23. Explicitly caveat limited power and lack of regularisation |
 
 ---
 

@@ -1,0 +1,4 @@
+link_test_pval: 4.122452446888132e-05
+link_test_sig: True
+max_coef_diff_sv: 2.2655691657239525
+max_se_ratio: 0.27762232785176905
