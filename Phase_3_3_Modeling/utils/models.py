@@ -176,16 +176,19 @@ def flogit_coefficients(
 
 def _fast_pseudo_r2(X: np.ndarray, y: np.ndarray) -> float:
     Xc = sm.add_constant(X, prepend=True, has_constant='add')
-    try:
-        model = sm.GLM(
-            y.astype(float), Xc,
-            family=sm.families.Binomial(),
-        ).fit(maxiter=100, disp=False)
-        if not model.converged or model.llf is None or model.llnull is None or model.llnull == 0:
-            return 0.0
-        return float(1.0 - model.llf / model.llnull)
-    except Exception:
+    model = sm.GLM(
+        y.astype(float), Xc,
+        family=sm.families.Binomial(),
+    ).fit(maxiter=100, disp=False)
+    if not model.converged or model.llf is None or model.llnull is None or model.llnull == 0:
+        del model
         return 0.0
+    result = float(1.0 - model.llf / model.llnull)
+    del model
+    # statsmodels GLM.fit() creates reference cycles; gc reclaims them
+    import gc
+    gc.collect()
+    return result
 
 
 def bootstrap_delta_pseudo_r2(
@@ -219,9 +222,12 @@ def bootstrap_delta_pseudo_r2(
         y_boot = y_arr[boot_idx]
         X_m1_boot = X_m1_arr[boot_idx]
         X_m2_boot = X_m2_arr[boot_idx]
+
         pr2_m1 = _fast_pseudo_r2(X_m1_boot, y_boot)
         pr2_m2 = _fast_pseudo_r2(X_m2_boot, y_boot)
+
         delta_pseudo_r2_values[i] = pr2_m2 - pr2_m1
+
     ci_lower = float(np.percentile(delta_pseudo_r2_values, 2.5))
     ci_upper = float(np.percentile(delta_pseudo_r2_values, 97.5))
     return delta_pseudo_r2_values, (ci_lower, ci_upper)

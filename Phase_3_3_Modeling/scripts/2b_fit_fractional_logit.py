@@ -1,6 +1,10 @@
+import gc
 import sys
 import warnings
 from pathlib import Path
+
+warnings.filterwarnings("ignore", message="unknown kwargs")
+warnings.filterwarnings("ignore", message="Fractional logit GLM")
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -15,24 +19,28 @@ from config import (
     RANDOM_SEED,
     ALGORITHM_LABEL_MAP,
 )
-from utils.models import (
+from utils.fractional_models import (
     fit_fractional_logit,
+    fit_fractional_logit_unadjusted,
     predict_fractional_logit,
     flogit_coefficients,
     standardized_beta_flogit,
     bootstrap_delta_pseudo_r2,
+    flogit_cluster_robust_se,
+    extract_ll_aic_bic,
 )
 from utils.preprocessing import (
     build_feature_matrices,
     verify_fractional_logit_response,
 )
-from utils.cv import LofoFoldSplitter
+from utils.cv import LofoFoldSplitter, FiveFoldStratifiedSplitter
 from utils.metrics import (
     pseudo_r_squared_mcfadden,
     rmse,
     mae,
     cohens_f2,
 )
+
 
 RNG = np.random.default_rng(RANDOM_SEED)
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -88,7 +96,7 @@ def run_lofo_cv(
     m2_fold_preds: list = []
     fold_labels: list = []
 
-    for train_idx, test_idx, held_out_family in splitter.split(df):
+    for idx, (train_idx, test_idx, held_out_family) in enumerate(splitter.split(df)):
         y_train, y_test = y[train_idx], y[test_idx]
         X_m1_train, X_m1_test = X_m1.iloc[train_idx], X_m1.iloc[test_idx]
         X_m2_train, X_m2_test = X_m2.iloc[train_idx], X_m2.iloc[test_idx]
@@ -146,31 +154,102 @@ def run_lofo_cv(
     }
 
 
+def run_5fold_cv_flogit(
+    df: pd.DataFrame,
+    X_m1: pd.DataFrame,
+    X_m2: pd.DataFrame,
+    y: np.ndarray,
+) -> dict:
+    splitter = FiveFoldStratifiedSplitter()
+    m1_fold_metrics = []
+    m2_fold_metrics = []
+    m1_fold_preds: list = []
+    m2_fold_preds: list = []
+    fold_indices: list = []
+
+    for train_idx, test_idx, fold_idx in splitter.split(df):
+        y_train, y_test = y[train_idx], y[test_idx]
+        X_m1_train, X_m1_test = X_m1.iloc[train_idx], X_m1.iloc[test_idx]
+        X_m2_train, X_m2_test = X_m2.iloc[train_idx], X_m2.iloc[test_idx]
+
+        model_m1 = fit_fractional_logit(X_m1_train, y_train)
+        model_m2 = fit_fractional_logit(X_m2_train, y_train)
+
+        y_pred_m1 = predict_fractional_logit(model_m1, X_m1_test)
+        y_pred_m2 = predict_fractional_logit(model_m2, X_m2_test)
+
+        ll_null_m1 = model_m1.llnull if model_m1.llnull is not None and model_m1.llnull != 0 else 1.0
+        m1_metrics = _compute_cv_metrics(
+            y_test, y_pred_m1,
+            ll_model=float(model_m1.llf),
+            ll_null=float(ll_null_m1),
+        )
+        ll_null_m2 = model_m2.llnull if model_m2.llnull is not None and model_m2.llnull != 0 else 1.0
+        m2_metrics = _compute_cv_metrics(
+            y_test, y_pred_m2,
+            ll_model=float(model_m2.llf),
+            ll_null=float(ll_null_m2),
+        )
+
+        for d in [m1_metrics, m2_metrics]:
+            d["fold"] = int(fold_idx)
+        m1_fold_metrics.append(m1_metrics)
+        m2_fold_metrics.append(m2_metrics)
+        m1_fold_preds.append(y_pred_m1)
+        m2_fold_preds.append(y_pred_m2)
+        fold_indices.append(int(fold_idx))
+
+    n_folds = len(m1_fold_metrics)
+    m1_agg = _aggregate_cv_metrics(m1_fold_metrics, n_folds)
+    m2_agg = _aggregate_cv_metrics(m2_fold_metrics, n_folds)
+
+    fold_rows = []
+    for i, fidx in enumerate(fold_indices):
+        fold_rows.append({
+            "fold": fidx,
+            "model": "M1",
+            **m1_fold_metrics[i],
+        })
+        fold_rows.append({
+            "fold": fidx,
+            "model": "M2",
+            **m2_fold_metrics[i],
+        })
+
+    return {
+        "m1_summary": m1_agg,
+        "m2_summary": m2_agg,
+        "fold_details": pd.DataFrame(fold_rows),
+        "fold_metrics_m1": pd.DataFrame(m1_fold_metrics),
+        "fold_metrics_m2": pd.DataFrame(m2_fold_metrics),
+    }
+
+
 def run_full_sample(
     X_m1: pd.DataFrame,
     X_m2: pd.DataFrame,
     y: np.ndarray,
-    predictor_names_m1: list,
-    predictor_names_m2: list,
+    instance_id: np.ndarray,
 ) -> dict:
-    model_m1 = fit_fractional_logit(X_m1, y)
-    model_m2 = fit_fractional_logit(X_m2, y)
+    model_m1 = fit_fractional_logit_unadjusted(X_m1, y)
+    model_m2 = fit_fractional_logit_unadjusted(X_m2, y)
 
-    coefs_m1 = flogit_coefficients(model_m1, predictor_names=list(model_m1.params.index))
-    coefs_m2 = flogit_coefficients(model_m2, predictor_names=list(model_m2.params.index))
+    cr_model_m1 = flogit_cluster_robust_se(model_m1, instance_id)
+    cr_model_m2 = flogit_cluster_robust_se(model_m2, instance_id)
+
+    coefs_m1 = flogit_coefficients(cr_model_m1)
+    coefs_m2 = flogit_coefficients(cr_model_m2)
 
     y_pred_m1 = predict_fractional_logit(model_m1, X_m1)
     y_pred_m2 = predict_fractional_logit(model_m2, X_m2)
 
     n = len(y)
 
-    llf_m1 = float(model_m1.llf) if model_m1.llf is not None else float("nan")
-    llnull_m1 = float(model_m1.llnull) if model_m1.llnull is not None and model_m1.llnull != 0 else float("nan")
-    pseudo_r2_m1 = pseudo_r_squared_mcfadden(llf_m1, llnull_m1)
+    ll_info_m1 = extract_ll_aic_bic(model_m1)
+    ll_info_m2 = extract_ll_aic_bic(model_m2)
 
-    llf_m2 = float(model_m2.llf) if model_m2.llf is not None else float("nan")
-    llnull_m2 = float(model_m2.llnull) if model_m2.llnull is not None and model_m2.llnull != 0 else float("nan")
-    pseudo_r2_m2 = pseudo_r_squared_mcfadden(llf_m2, llnull_m2)
+    pseudo_r2_m1 = pseudo_r_squared_mcfadden(ll_info_m1["log_likelihood"], ll_info_m1["null_log_likelihood"])
+    pseudo_r2_m2 = pseudo_r_squared_mcfadden(ll_info_m2["log_likelihood"], ll_info_m2["null_log_likelihood"])
 
     cohen_f2 = cohens_f2(pseudo_r2_m1, pseudo_r2_m2)
 
@@ -185,10 +264,14 @@ def run_full_sample(
     return {
         "model_m1": model_m1,
         "model_m2": model_m2,
+        "cr_model_m1": cr_model_m1,
+        "cr_model_m2": cr_model_m2,
         "coefs_m1": coefs_m1,
         "coefs_m2": coefs_m2,
         "pseudo_r2_m1": pseudo_r2_m1,
         "pseudo_r2_m2": pseudo_r2_m2,
+        "ll_info_m1": ll_info_m1,
+        "ll_info_m2": ll_info_m2,
         "cohen_f2": cohen_f2,
         "y_pred_m1": y_pred_m1,
         "y_pred_m2": y_pred_m2,
@@ -271,32 +354,39 @@ def run_flogit_pipeline(
         X_m2 = X_m2.iloc[valid_mask]
         df = df.iloc[valid_mask].copy()
 
-    print(f"  [1/4] LOFO CV...")
+    print(f"  [1/5] LOFO CV...")
     lofo_results = run_lofo_cv(df, X_m1, X_m2, y)
     print(f"    M1 pseudo-R² (mean±SD): {lofo_results['m1_summary']['pseudo_r_squared_mean']:.4f} ± {lofo_results['m1_summary']['pseudo_r_squared_sd']:.4f}")
     print(f"    M2 pseudo-R² (mean±SD): {lofo_results['m2_summary']['pseudo_r_squared_mean']:.4f} ± {lofo_results['m2_summary']['pseudo_r_squared_sd']:.4f}")
 
-    print(f"  [2/4] Full-sample fit...")
+    print(f"  [2/5] 5-fold CV...")
+    cv5_results = run_5fold_cv_flogit(df, X_m1, X_m2, y)
+    print(f"    M1 pseudo-R² (mean±SD): {cv5_results['m1_summary']['pseudo_r_squared_mean']:.4f} ± {cv5_results['m1_summary']['pseudo_r_squared_sd']:.4f}")
+    print(f"    M2 pseudo-R² (mean±SD): {cv5_results['m2_summary']['pseudo_r_squared_mean']:.4f} ± {cv5_results['m2_summary']['pseudo_r_squared_sd']:.4f}")
+
+    print(f"  [3/5] Full-sample fit...")
     full = run_full_sample(
         X_m1, X_m2, y,
-        predictor_names_m1=pred_names_m1,
-        predictor_names_m2=pred_names_m2,
+        instance_id=df["instance_id"].values,
     )
-    print(f"    M1 pseudo-R²={full['pseudo_r2_m1']:.4f}")
-    print(f"    M2 pseudo-R²={full['pseudo_r2_m2']:.4f}")
+    print(f"    M1 pseudo-R²={full['pseudo_r2_m1']:.4f}, AIC={full['ll_info_m1']['aic']:.2f}, BIC={full['ll_info_m1']['bic']:.2f}")
+    print(f"    M2 pseudo-R²={full['pseudo_r2_m2']:.4f}, AIC={full['ll_info_m2']['aic']:.2f}, BIC={full['ll_info_m2']['bic']:.2f}")
     print(f"    Δ pseudo-R²={full['pseudo_r2_m2'] - full['pseudo_r2_m1']:.4f}")
     print(f"    Cohen's f²={full['cohen_f2']:.4f}")
 
-    print(f"  [3/4] Bootstrap Δ pseudo-R² CI...")
+    print(f"  [4/5] Bootstrap Δ pseudo-R² CI...")
+    sys.stdout.flush()
+
+    family_arr = df["family"].values
     delta_pr2_values, delta_pr2_ci = bootstrap_delta_pseudo_r2(
         X_m1, X_m2, y,
-        family=df["family"].values,
+        family=family_arr,
         n_resamples=N_BOOTSTRAP_RESAMPLES,
         rng=RNG,
     )
     print(f"    Δ pseudo-R² 95% CI: [{delta_pr2_ci[0]:.4f}, {delta_pr2_ci[1]:.4f}]")
 
-    print(f"  [4/4] Standardised β (M2)...")
+    print(f"  [5/5] Standardised β (M2)...")
     std_beta_m2 = standardized_beta_flogit(X_m2, y)
 
     print(f"  SE comparison (M1)...")
@@ -318,6 +408,7 @@ def run_flogit_pipeline(
         "response": response,
         "status": spec["status"],
         "lofo": lofo_results,
+        "cv5": cv5_results,
         "full": full,
         "delta_pr2_ci": delta_pr2_ci,
         "std_beta_m2": std_beta_m2,
@@ -347,12 +438,29 @@ def save_results(algo_label: str, response: str, results: dict):
         "model": "M2",
         **results["lofo"]["m2_summary"],
     }
+    cv5_summary = {
+        "cv_scheme": "5-fold",
+        "algorithm": algo_label,
+        "response": response,
+        "model": "M1",
+        **results["cv5"]["m1_summary"],
+    }
+    cv5_summary_m2 = {
+        "cv_scheme": "5-fold",
+        "algorithm": algo_label,
+        "response": response,
+        "model": "M2",
+        **results["cv5"]["m2_summary"],
+    }
     full_m1 = {
         "cv_scheme": "full_sample",
         "algorithm": algo_label,
         "response": response,
         "model": "M1",
         "pseudo_r_squared": results["full"]["pseudo_r2_m1"],
+        "log_likelihood": results["full"]["ll_info_m1"]["log_likelihood"],
+        "aic": results["full"]["ll_info_m1"]["aic"],
+        "bic": results["full"]["ll_info_m1"]["bic"],
         "rmse": results["full"]["rmse_m1"],
         "mae": results["full"]["mae_m1"],
     }
@@ -362,12 +470,16 @@ def save_results(algo_label: str, response: str, results: dict):
         "response": response,
         "model": "M2",
         "pseudo_r_squared": results["full"]["pseudo_r2_m2"],
+        "log_likelihood": results["full"]["ll_info_m2"]["log_likelihood"],
+        "aic": results["full"]["ll_info_m2"]["aic"],
+        "bic": results["full"]["ll_info_m2"]["bic"],
         "rmse": results["full"]["rmse_m2"],
         "mae": results["full"]["mae_m2"],
     }
 
     metrics_rows = [
         lofo_summary, lofo_summary_m2,
+        cv5_summary, cv5_summary_m2,
         full_m1, full_m2,
     ]
     for row in metrics_rows:
@@ -379,6 +491,10 @@ def save_results(algo_label: str, response: str, results: dict):
         "response": response,
         "status": results["status"],
         "delta_pseudo_r2": results["full"]["pseudo_r2_m2"] - results["full"]["pseudo_r2_m1"],
+        "aic_m1": results["full"]["ll_info_m1"]["aic"],
+        "aic_m2": results["full"]["ll_info_m2"]["aic"],
+        "bic_m1": results["full"]["ll_info_m1"]["bic"],
+        "bic_m2": results["full"]["ll_info_m2"]["bic"],
         "cohen_f2": results["full"]["cohen_f2"],
         "delta_pseudo_r2_ci_lower": results["delta_pr2_ci"][0],
         "delta_pseudo_r2_ci_upper": results["delta_pr2_ci"][1],
@@ -400,13 +516,19 @@ def save_results(algo_label: str, response: str, results: dict):
     lofo_folds[lofo_cols].to_csv(lofo_path, index=False)
     print(f"  Saved LOFO folds: {lofo_path.name}")
 
+    cv5_folds = results["cv5"]["fold_details"]
+    cv5_path = CV_DIR / f"cv5_folds_flogit_{prefix}.csv"
+    cv5_cols = ["fold", "model", "pseudo_r_squared", "rmse", "mae"]
+    cv5_folds[cv5_cols].to_csv(cv5_path, index=False)
+    print(f"  Saved 5-fold folds: {cv5_path.name}")
+
     coefs_m1_path = DIAG_DIR / f"full_sample_coefs_flogit_{prefix}_M1.csv"
     results["full"]["coefs_m1"].to_csv(coefs_m1_path, index=False)
     print(f"  Saved M1 coefficients: {coefs_m1_path.name}")
 
     coefs_m2_path = DIAG_DIR / f"full_sample_coefs_flogit_{prefix}_M2.csv"
     results["cr_coefs_m2"].to_csv(coefs_m2_path, index=False)
-    print(f"  Saved M2 coefficients (HC3): {coefs_m2_path.name}")
+    print(f"  Saved M2 coefficients (cluster-robust): {coefs_m2_path.name}")
 
     std_beta_path = DIAG_DIR / f"std_beta_flogit_{prefix}_M2.csv"
     results["std_beta_m2"].to_csv(std_beta_path, index=False)
@@ -457,6 +579,10 @@ def main():
 
         results = run_flogit_pipeline(df, algo, response, spec, algo_label)
         metrics_df, inference_df = save_results(algo_label, response, results)
+
+        del results
+        gc.collect()
+
         all_metrics.append(metrics_df)
         all_inference.append(inference_df)
 
