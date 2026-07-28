@@ -1,0 +1,8 @@
+DP Compositional Check
+==================================================
+Check performed: True
+Rows checked: 6000
+Exact matches: 0
+All exact: False
+Exact fraction: 0.0000
+STATUS: Relationship is approximate, not exact
