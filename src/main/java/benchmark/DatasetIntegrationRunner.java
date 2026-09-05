@@ -16,12 +16,12 @@ import java.util.*;
 
 public final class DatasetIntegrationRunner {
 
-    private static final Path INSTANCES_CSV = Paths.get("results", "instances.csv");
-    private static final Path FULL_EXPERIMENT_CSV = Paths.get("out", "results", "full_experiment.csv");
-    private static final Path BB_INSTRUMENTATION_CSV = Paths.get("results", "bb_instrumentation.csv");
-    private static final Path DP_INSTRUMENTATION_CSV = Paths.get("results", "dp_instrumentation.csv");
-    private static final Path GREEDY_INSTRUMENTATION_CSV = Paths.get("results", "greedy_instrumentation.csv");
-    private static final Path OUTPUT_CSV = Paths.get("out", "results", "canonical_dataset.csv");
+    private static final Path INSTANCES_CSV = Paths.get("data", "instrumentation", "instances.csv");
+    private static final Path FULL_EXPERIMENT_CSV = Paths.get("data", "raw", "full_experiment.csv");
+    private static final Path BB_INSTRUMENTATION_CSV = Paths.get("data", "instrumentation", "bb_instrumentation.csv");
+    private static final Path DP_INSTRUMENTATION_CSV = Paths.get("data", "instrumentation", "dp_instrumentation.csv");
+    private static final Path GREEDY_INSTRUMENTATION_CSV = Paths.get("data", "instrumentation", "greedy_instrumentation.csv");
+    private static final Path OUTPUT_CSV = Paths.get("data", "raw", "canonical_dataset.csv");
 
     private static final String KEY_SEPARATOR = "|";
 

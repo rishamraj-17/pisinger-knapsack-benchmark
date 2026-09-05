@@ -12,10 +12,10 @@ set -e
 
 SRC_DIR="src/main/java"
 LIB_DIR="lib"
-OUT_DIR="out"
+OUT_DIR="target"
 JAR_NAME="knapsack.jar"
 
-mkdir -p "$LIB_DIR" "$OUT_DIR/results"
+mkdir -p "$LIB_DIR" "data/raw"
 
 # Download dependency if needed
 if [ ! -f "$LIB_DIR/commons-csv-1.10.0.jar" ]; then
@@ -32,4 +32,4 @@ echo "Running experiment..."
 java -Xmx2g -cp "$OUT_DIR:$LIB_DIR/commons-csv-1.10.0.jar" Main "$@"
 
 echo ""
-echo "Done. Results in out/results/full_experiment.csv"
+echo "Done. Results in data/raw/full_experiment.csv"

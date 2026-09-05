@@ -9,34 +9,47 @@ lib/
 # Python bytecode
 __pycache__/
 *.pyc
+*.pyo
+.pytest_cache/
 
 # IDE
 .idea/
+.vscode/
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Ignore all of out/ except canonical data
-out/*
-!out/results/
-out/results/*
-!out/results/full_experiment.csv
+# Data & Generated Output
+data/raw/*.csv
+data/instrumentation/*.csv
+outputs/tables/*.tex
+outputs/tables/*.csv
+outputs/figures/fixed/pdf/*.pdf
+outputs/figures/fixed/png/*.png
+outputs/figures/fixed/svg/*.svg
+outputs/figures/scaled/pdf/*.pdf
+outputs/figures/scaled/png/*.png
+outputs/figures/scaled/svg/*.svg
+outputs/eda/
 
 # Python Virtual Environments
+python/venv/
 venv/
 .venv/
 env/
 .env/
 
 # LaTeX and PDF generation artifacts
-Submission_Package/tectonic
-*.aux
-*.bbl
-*.blg
-*.log
-*.out
-*.toc
-*.fls
-*.fdb_latexmk
-*.synctex.gz
+manuscript/tectonic
+manuscript/*.pdf
+manuscript/*.aux
+manuscript/*.bbl
+manuscript/*.blg
+manuscript/*.log
+manuscript/*.out
+manuscript/*.toc
+manuscript/*.fls
+manuscript/*.fdb_latexmk
+manuscript/*.synctex.gz
+manuscript/comment.cut

@@ -35,7 +35,7 @@ public final class GreedyInstrumentationRunner {
         long seed = 42L;
 
         System.out.println("=== Greedy Instrumentation Runner ===");
-        Path outputPath = Paths.get("results", "greedy_instrumentation.csv");
+        Path outputPath = Paths.get("data", "instrumentation", "greedy_instrumentation.csv");
         outputPath.getParent().toFile().mkdirs();
 
         try (FileWriter writer = new FileWriter(outputPath.toFile());

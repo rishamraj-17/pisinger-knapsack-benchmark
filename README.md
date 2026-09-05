@@ -10,39 +10,34 @@ Java Benchmark ──► Canonical Dataset ──► Analysis ──► Paper
                                      Statistical Modeling ──► Feature Importance + Diagnostics
 ```
 
-The `PIPELINE.md` file describes the reproduction workflow in detail.
+The [`docs/guides/reproduction_pipeline.md`](docs/guides/reproduction_pipeline.md) file describes the reproduction workflow in detail. For an intuitive introduction to the codebase, start with the [`docs/guides/professors_guide.md`](docs/guides/professors_guide.md).
 
 ## Repository Structure
 
+The repository is organized into five strictly separated domain contexts:
+
 | Directory | Purpose | Status |
 |-----------|---------|--------|
-| `src/main/java/` | Algorithm implementations, benchmark harness, instance generators, dataset integration | **Active** |
-| `out/results/` | Canonical experiment output (`full_experiment.csv`, 18,000 runs) | **Generated** |
-| `results/` | Instrumentation CSVs (algorithm execution traces) | **Generated** |
-| `analysis/` scripts | `analyze.py`, `figures.py`, `plot_utils.py`, `eda_phase3_1.py`, `extract_features.py`, `update_draft.py` | **Active** |
-| `tables/` | LaTeX tables generated from experiment data | **Generated** |
-| `figures/` | Publication figures (PDF, PNG, SVG — fixed and scaled capacity modes) | **Generated** |
-| `Phase_3_3_Modeling/` | Statistical modeling pipeline (see below) | **Active** |
-| `Submission_Package/` | Frozen manuscript LaTeX, tables, figures, and supplementary materials | **Frozen** |
-| `paper/` | Manuscript draft (`draft.md`) | **Active** |
-| `docs/` | Supplementary documentation (`INSTANCE_FEATURES.md`) | **Active** |
-| `governance/` | Phase reports, design documents, and audits from completed phases | **Historical** |
+| `src/` | Java benchmark source code, instance generators, and solvers (`main/` and `test/`) | **Active** |
+| `data/` | Canonical experiment output (`data/raw/full_experiment.csv`) and execution traces (`data/instrumentation/`) | **Generated** |
+| `python/` | Statistical modeling pipeline (`python/modeling/`) and analysis utilities (`python/scripts/`) | **Active** |
+| `outputs/` | Publication figures, LaTeX tables, and EDA charts generated from experiment data | **Generated** |
+| `manuscript/` | Final manuscript LaTeX source (`main.tex`) and compiled PDF (`main.pdf`) | **Frozen** |
+| `docs/` | Core guides (`docs/guides/`) and archived project management audits (`docs/historical/`) | **Historical** |
 
-> **Active** = current development source / documentation.
+> **Active** = current development source code.
 > **Frozen** = immutable artifacts supporting the paper; do not modify.
 > **Historical** = records of completed phases; preserved for provenance.
-> **Generated** = pipeline output; regenerable on demand.
+> **Generated** = pipeline output; regenerable on demand via `reproduce.sh`.
 
 ## Phase 3.3 — Statistical Modeling
 
-The `Phase_3_3_Modeling/` directory contains the statistical modeling pipeline that investigates which internal algorithm execution metrics best explain runtime and solution quality. It consists of:
+The `python/modeling/` directory contains the statistical modeling pipeline that investigates which internal algorithm execution metrics best explain runtime and solution quality. It consists of:
 
 - `config.py` — Central configuration (model specifications, predictors, exclusions)
 - `scripts/` — Pipeline stages: `1_prepare_data.py` → `2a_fit_ols.py`, `2b_fit_fractional_logit.py`, `2c_fit_elasticnet.py`, `2d_fit_hurdle.py` → `3_compute_importance.py` → `4_diagnostics.py`
 - `utils/` — Shared modules: `models.py`, `importance.py`, `diagnostics.py`, `metrics.py`, `cv.py`, `preprocessing.py`, `data.py`, `fractional_models.py`
 - `output/` — Generated results, cross-validation folds, diagnostics, feature importance rankings, and figures
-
-Frozen snapshots of modeling outputs are preserved in `Phase_3_3_Modeling/Phase3_Freeze/` and `Phase_3_3_Modeling/Phase4_Freeze/`.
 
 ## Quick Start
 
@@ -56,28 +51,24 @@ Frozen snapshots of modeling outputs are preserved in `Phase_3_3_Modeling/Phase3
 ./build_and_run.sh 20,50 1000 5 42
 
 # Generate analysis tables and figures
-python3 analyze.py out/results/full_experiment.csv
+python3 python/scripts/analyze.py data/raw/full_experiment.csv
 ```
 
-See `PIPELINE.md` for the complete provenance chain and parameter reference.
-
-## Root Java Files
-
-Several Java validation utilities (`TestBound.java`, `TestFloat.java`, `TestNodeCount.java`, `TestPQ.java`, `TestRandom.java`) reside at the repository root. These are manual development-time tools used during algorithm implementation. They have no dependencies from any automated pipeline, shell script, or documentation, and intentionally remain at the root for straightforward compilation and execution without IDE configuration.
+See `docs/guides/reproduction_pipeline.md` for the complete provenance chain and parameter reference.
 
 ## Prerequisites
 
 - **Java 17+** (OpenJDK or Oracle JDK)
 - **Python 3.8+** with NumPy and Matplotlib
-- Phase 3.3 modeling requires additional packages (see `Phase_3_3_Modeling/.venv/`)
+- Phase 3.3 modeling requires additional packages (see `python/venv/`)
 
 ## Reproducibility
 
-Every numerical value in the paper traces to `out/results/full_experiment.csv` through `analyze.py`. No figures or statistics are edited manually. See `PIPELINE.md` for the full provenance chain.
+Every numerical value in the paper traces to `data/raw/full_experiment.csv` through `python/scripts/analyze.py`. No figures or statistics are edited manually. 
 
 ## Paper
 
-The research paper is at [`paper/draft.md`](paper/draft.md). LaTeX tables in `tables/` are designed for `\input{tables/*_table_*}` inclusion. The submitted manuscript is at [`Submission_Package/manuscript.pdf`](Submission_Package/manuscript.pdf).
+The final submitted manuscript and its LaTeX source are located in the [`manuscript/`](manuscript/) folder. All numerical claims within it are pulled automatically from the `outputs/` directory.
 
 ## Citation
 

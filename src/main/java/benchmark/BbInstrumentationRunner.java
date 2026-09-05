@@ -45,7 +45,7 @@ public final class BbInstrumentationRunner {
         long seed = 42L;
 
         System.out.println("=== B&B Instrumentation Runner ===");
-        Path outputPath = Paths.get("results", "bb_instrumentation.csv");
+        Path outputPath = Paths.get("data", "instrumentation", "bb_instrumentation.csv");
         outputPath.getParent().toFile().mkdirs();
 
         try (FileWriter writer = new FileWriter(outputPath.toFile());

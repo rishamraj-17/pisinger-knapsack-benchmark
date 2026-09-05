@@ -35,7 +35,7 @@ public final class DpInstrumentationRunner {
         long seed = 42L;
 
         System.out.println("=== DP Instrumentation Runner ===");
-        Path outputPath = Paths.get("results", "dp_instrumentation.csv");
+        Path outputPath = Paths.get("data", "instrumentation", "dp_instrumentation.csv");
         outputPath.getParent().toFile().mkdirs();
 
         try (FileWriter writer = new FileWriter(outputPath.toFile());
