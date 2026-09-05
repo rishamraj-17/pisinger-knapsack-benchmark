@@ -237,7 +237,7 @@ Among the 42 instance characteristics, permutation importance analysis identifie
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{figures/Figure_4.png}
+\includegraphics[width=\columnwidth]{../outputs/eda/correlation_heatmap.png}
 \caption{Correlation heatmap of instance characteristics and execution metrics. Strong multicollinearity is visible among static features, reflecting the underlying structural topologies of the Pisinger instance families.}
 \Description{A heatmap showing correlations between various features. Distinct blocks of high correlation indicate structural groupings of features.}
 \label{fig:heatmap}
@@ -245,7 +245,7 @@ Among the 42 instance characteristics, permutation importance analysis identifie
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{figures/Figure_5.png}
+\includegraphics[width=\columnwidth]{../outputs/figures/fixed/pdf/bb_nodes_boxplot.pdf}
 \caption{Branch and Bound nodes explored across the five structural families. \texttt{AlmostEqualRatios} instances require orders of magnitude more node exploration, illustrating the severe structural distribution shift.}
 \Description{Boxplots showing the distribution of nodes explored by Branch and Bound for each of the five instance families. AlmostEqualRatios is significantly higher than the others.}
 \label{fig:nodes_by_family}
@@ -354,7 +354,7 @@ Dynamic Programming & \texttt{fill\_rate} & 0.253 & 0.270 & $+0.017$ \\
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{figures/Figure_1.png}
+\includegraphics[width=\columnwidth]{../python/modeling/output/figures/importance_BandB_log_nodes_explored.png}
 \caption{Feature importance profiles for Branch and Bound \texttt{log\_nodes\_explored} (M2)}
 \Description{Bar chart showing the relative importance of predictors for Branch and Bound log nodes explored. The top predictors include instance-level features and execution metrics.}
 \label{fig:importance}
@@ -373,19 +373,19 @@ Dynamic Programming & \texttt{fill\_rate} & 0.253 & 0.270 & $+0.017$ \\
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{figures/Figure_2.png}
+\includegraphics[width=\columnwidth]{../python/modeling/output/figures/coefficient_trace.png}
 \caption{Elastic-Net regularization paths across LOFO folds}
 \Description{Plot of Elastic-Net regularization paths across leave-one-family-out cross-validation folds, showing consistent coefficient shrinkage patterns.}
 \label{fig:reg_paths}
 \end{figure}
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{figures/Figure_3.png}
-\caption{Residuals vs.\ fitted values for Branch and Bound \texttt{log\_time\_millis} (M2). Slight heteroskedasticity in the distribution tails is visible (Claim D04).}
-\Description{Scatter plot of residuals versus fitted values for the Branch and Bound log time model. The plot reveals slight heteroskedasticity in the tails.}
-\label{fig:residuals}
-\end{figure}
+% \begin{figure}[t]
+% \centering
+% \includegraphics[width=\columnwidth]{../python/modeling/output/figures/residuals_vs_fitted.png} % Note: Missing figure from pipeline
+% \caption{Residuals vs.\ fitted values for Branch and Bound \texttt{log\_time\_millis} (M2). Slight heteroskedasticity in the distribution tails is visible (Claim D04).}
+% \Description{Scatter plot of residuals versus fitted values for the Branch and Bound log time model. The plot reveals slight heteroskedasticity in the tails.}
+% \label{fig:residuals}
+% \end{figure}
 
 \subsection{Distributional Shape as Supplementary Execution Features (RQ3)}\label{sec:rq3}
 
