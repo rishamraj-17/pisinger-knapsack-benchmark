@@ -66,8 +66,16 @@ print(f'Combined {len(out_rows)} rows ({len(fixed_rows)} fixed + {len(scaled_row
 "
 
 echo ""
-echo "Step 4/4: Generating tables and figures..."
-python3 python/scripts/analyze.py data/raw/full_experiment.csv
+echo "Step 4/6: Generating EDA tables and figures..."
+python/venv/bin/python python/scripts/analyze.py data/raw/full_experiment.csv
+
+echo ""
+echo "Step 5/6: Generating regression tables from model results..."
+python/venv/bin/python python/scripts/build_regression_tables.py
+
+echo ""
+echo "Step 6/6: Recompiling manuscript PDF..."
+(cd manuscript && ./tectonic main.tex)
 
 echo ""
 echo "=== Reproduction complete ==="

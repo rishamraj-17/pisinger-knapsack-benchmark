@@ -261,37 +261,11 @@ Among the 42 instance characteristics, permutation importance analysis identifie
   \item \textbf{Conclusion:} Within-sample and 5-fold CV results confirm that static features carry strong predictive associations for Greedy and DP runtimes ($R^2_{adj} \ge 0.856$) and moderate associations for B\&B performance ($R^2_{adj} \ge 0.735$). LOFO results reveal that these in-sample associations do not transfer uniformly across structural families, motivating the incremental analysis in the following subsections.
 \end{itemize}
 
-\begin{table}[t]
-\centering
-\caption{Full-sample $R^2$, 5-fold CV $R^2$, and LOFO mean $R^2$ for baseline (M1) and augmented (M2) OLS models. The three protocols tell qualitatively different stories: full-sample and 5-fold CV are close; LOFO exposes structural distribution shift.}
-\label{tab:ols_metrics}
-\begin{tabular}{llccccc}
-\toprule
-\textbf{Algorithm} & \textbf{Outcome} & \textbf{Adj.~$R^2$ M1} & \textbf{Adj.~$R^2$ M2} & \textbf{$\Delta R^2_{adj}$} & \textbf{5-Fold $R^2$ M2} & \textbf{LOFO $R^2$ M2} \\
-\midrule
-Greedy & \texttt{log\_time\_millis} & 0.856 & 0.858 & $+0.001$ & 0.855 & $-5.07$\textsuperscript{$\dagger$} \\
-Dynamic Programming & \texttt{log\_time\_millis} & 0.978 & 0.979 & $+0.001$ & 0.978 & $+0.810$\textsuperscript{$\ddagger$} \\
-Dynamic Programming & \texttt{log\_memory\_mb} & 0.008 & 0.008 & $\approx 0$ & 0.003 & $-110.4$\textsuperscript{$\dagger$} \\
-Branch \& Bound & \texttt{log\_time\_millis} & 0.743 & 0.961 & $+0.217$ & 0.331 & $-0.190$\textsuperscript{$\dagger$} \\
-Branch \& Bound & \texttt{log\_nodes\_explored} & 0.735 & 0.979 & $+0.245$ & 0.978 & $-0.459$\textsuperscript{$\dagger$} \\
-\bottomrule
-\end{tabular}
-{\small $\dagger$~LOFO $R^2 < 0$: model performs worse than predicting the family mean. $\ddagger$~DP log\_time LOFO is positive but driven by one family; others vary widely.}
-\end{table}
+% AUTO-GENERATED: rebuild with python/scripts/build_regression_tables.py
+\input{../outputs/tables/table_ols_metrics.tex}
 
-\begin{table}[t]
-\centering
-\caption{Full-sample and LOFO pseudo-$R^2$ for baseline (M1) and augmented (M2) Fractional Logit models for bounded proportional outcomes}
-\label{tab:flogit_metrics}
-\begin{tabular}{llcccc}
-\toprule
-\textbf{Algorithm} & \textbf{Outcome} & \textbf{Pseudo-$R^2$ (M1)} & \textbf{Pseudo-$R^2$ (M2)} & \textbf{$\Delta$pseudo-$R^2$} \\
-\midrule
-Greedy & \texttt{optimality\_gap} & 0.216 & 0.274 & $+0.058$ \\
-Dynamic Programming & \texttt{fill\_rate} & 0.253 & 0.270 & $+0.017$ \\
-\bottomrule
-\end{tabular}
-\end{table}
+% AUTO-GENERATED: rebuild with python/scripts/build_regression_tables.py
+\input{../outputs/tables/table_flogit_metrics.tex}
 
 \subsection{Incremental Contribution of Execution Metrics (Sub-RQ2a)}
 \begin{itemize}
