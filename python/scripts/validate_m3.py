@@ -14,9 +14,9 @@ def compute_vif(X):
 
 def main():
     print("--- Loading Data ---")
-    instances = pd.read_csv('results/instances.csv')
-    bb = pd.read_csv('results/bb_instrumentation.csv')
-    shapes = pd.read_csv('results/shape_features.csv')
+    instances = pd.read_csv('data/instrumentation/instances.csv')
+    bb = pd.read_csv('data/instrumentation/bb_instrumentation.csv')
+    shapes = pd.read_csv('data/instrumentation/shape_features.csv')
     
     df = instances.merge(bb, on='instance_id', suffixes=('', '_bb'))
     df = df.merge(shapes, on='instance_id')

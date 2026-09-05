@@ -12,24 +12,24 @@ set -e
 echo "=== Knapsack Empirical Comparison: Reproduction Pipeline ==="
 echo ""
 
-echo "Step 0/4: Cleaning up stale outputs..."
+echo "Step 0/6: Cleaning up stale outputs..."
 rm -f outputs/tables/*.tex outputs/tables/*.csv \
     outputs/figures/fixed/pdf/*.pdf outputs/figures/fixed/png/*.png outputs/figures/fixed/svg/*.svg \
     outputs/figures/scaled/pdf/*.pdf outputs/figures/scaled/png/*.png outputs/figures/scaled/svg/*.svg
 
-echo "Step 1/4: Fixed-capacity experiment (n up to 1000, 100 seeds)..."
+echo "Step 1/6: Fixed-capacity experiment (n up to 1000, 100 seeds)..."
 ./build_and_run.sh 20,50,100,200,500,1000 1000 100 42 fixed
 cp data/raw/full_experiment.csv data/raw/fixed_experiment.csv
 
 echo ""
-echo "Step 2/4: Scaled-capacity experiment (W = 0.5 * sum_weights, n up to 1000, 100 seeds)..."
+echo "Step 2/6: Scaled-capacity experiment (W = 0.5 * sum_weights, n up to 1000, 100 seeds)..."
 ./build_and_run.sh 20,50,100,200,500,1000 0 100 42 scaled
 cp data/raw/full_experiment.csv data/raw/scaled_experiment.csv
 
 echo ""
-echo "Step 3/4: Combining results..."
+echo "Step 3/6: Combining results..."
 # Combine: add a capacity_mode column
-python3 -c "
+python/venv/bin/python -c "
 import csv
 import os
 

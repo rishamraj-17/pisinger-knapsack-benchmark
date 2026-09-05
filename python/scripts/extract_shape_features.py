@@ -5,7 +5,7 @@ import ast
 
 def extract_shape_features():
     print("Reading BB instrumentation...")
-    df = pd.read_csv('results/bb_instrumentation.csv')
+    df = pd.read_csv('data/instrumentation/bb_instrumentation.csv')
     
     # We will build a new dataframe with shape features
     shape_df = pd.DataFrame()
@@ -79,7 +79,7 @@ def extract_shape_features():
     shape_df['queue_entropy'] = queue_entropy
     
     # Save
-    out_path = 'results/shape_features.csv'
+    out_path = 'data/instrumentation/shape_features.csv'
     shape_df.to_csv(out_path, index=False)
     print(f"Saved {len(shape_df)} rows to {out_path}")
 

@@ -2,7 +2,7 @@
 """
 Phase 2.1: Instance feature extraction for the Knapsack Empirical Comparison.
 
-Generates results/instances.csv containing descriptive features for every
+Generates data/instrumentation/instances.csv containing descriptive features for every
 generated knapsack instance, without modifying any benchmark outputs.
 
 Usage:

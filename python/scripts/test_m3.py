@@ -4,9 +4,9 @@ import statsmodels.api as sm
 
 def main():
     # Load data
-    instances = pd.read_csv('results/instances.csv')
-    bb = pd.read_csv('results/bb_instrumentation.csv')
-    shapes = pd.read_csv('results/shape_features.csv')
+    instances = pd.read_csv('data/instrumentation/instances.csv')
+    bb = pd.read_csv('data/instrumentation/bb_instrumentation.csv')
+    shapes = pd.read_csv('data/instrumentation/shape_features.csv')
     
     # Merge
     df = instances.merge(bb, on='instance_id', suffixes=('', '_bb'))
