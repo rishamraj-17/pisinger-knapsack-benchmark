@@ -1,8 +1,0 @@
-bp_lm_stat: 347.63244870401945
-bp_lm_pval: 1.333567238303858e-40
-bp_f_stat: 5.703358383496374
-bp_f_pval: 4.107339391331099e-42
-max_vif: 55845712.74371526
-max_cooks_d: 5.906267414573351
-num_cooks_gt_1: 1
-partial_resid_error: 'numpy.ndarray' object has no attribute 'index'

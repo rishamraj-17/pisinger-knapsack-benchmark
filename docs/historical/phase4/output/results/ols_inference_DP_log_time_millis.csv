@@ -1,2 +1,0 @@
-algorithm,response,status,delta_r2_adj,f_stat,f_p_value,delta_df,cohen_f2,delta_r2_ci_lower,delta_r2_ci_upper,bt_rmse_m1,bt_rmse_m2,smearing_phi_m1_pooled,smearing_phi_m2_pooled
-DP,log_time_millis,confirmatory,0.001292432133438215,37.61573008012351,0.0,10,0.06325160598641882,0.0004694953769895094,0.0011133653249260466,2.7346421565066654,3.140260821274099,1.0700886902398088,1.0663587120742455
