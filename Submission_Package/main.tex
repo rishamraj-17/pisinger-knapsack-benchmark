@@ -69,31 +69,25 @@
 \begin{abstract}
 The 0/1 knapsack problem is a canonical NP-hard challenge serving
 as a fundamental model for resource allocation. Existing literature heavily
-emphasises predicting empirical hardness from static instance features alone.
-This study methodically separates the predictive value of a priori instance
+emphasises predicting empirical hardness from static, a priori instance features
+alone. This study methodically separates the predictive value of static instance
 characteristics from that of dynamic, internal execution metrics when modelling
-algorithmic scaling for Greedy, Dynamic Programming, and Branch and Bound.
-Using a benchmark of 6,000 knapsack instances, we show that baseline
-predictability using only static characteristics is high for Greedy and
-Dynamic Programming runtimes (adjusted $R^2 \ge 0.856$) but near-zero
-for Dynamic Programming memory (adjusted $R^2 = 0.008$), and lower for
-heuristic optimality gaps (pseudo-$R^2 \le 0.253$). Internal execution
-metrics provide substantial incremental explanatory power ($\Delta
-R^2_{\mathrm{adj}} \ge 0.217$) for Branch and Bound runtime and node exploration but
-negligible improvement ($\le 0.001$) for Greedy and Dynamic Programming runtime models.
-Furthermore, we demonstrate that the \emph{distributional shape} of the
-search tree --- captured via depth entropy, depth skewness, and related
-histogram-derived descriptors --- adds explanatory power beyond scalar
-execution summaries ($\Delta R^2_{\mathrm{adj}} = 0.0074$; nested $F = 294.9$,
-$p < 10^{-16}$), with modest but replicable out-of-distribution transfer
-improvements on three of five held-out structural families under leave-one-family-out
-cross-validation. This transfer benefit is bounded: shape features do not
-resolve the catastrophic generalisation failure previously identified in
-structurally atypical topologies, and this boundary is characterised explicitly.
-These results indicate that Greedy and Dynamic
-Programming runtimes are largely predictable from static instance characteristics alone,
-whereas Branch and Bound derives additional explanatory power from dynamic
-execution metrics, including both scalar summaries and distributional shape descriptors.
+algorithmic scaling for Greedy, Dynamic Programming (DP), and Branch and Bound (B\&B)
+on a benchmark of 6,000 instances spanning five Pisinger structural families.
+Full-sample predictability using only static features is high for Greedy and DP
+runtimes ($R^2_{adj} \ge 0.856$), near-zero for DP memory ($R^2_{adj} = 0.008$),
+and moderate for heuristic optimality gaps (pseudo-$R^2 \le 0.253$). Internal execution
+metrics provide substantial incremental explanatory power ($\Delta R^2_{adj} \ge 0.217$)
+for B\&B performance, negligible improvement ($\le 0.001$) for Greedy and DP runtimes,
+and a meaningful Greedy optimality-gap gain ($\Delta$pseudo-$R^2 = 0.058$).
+However, under Leave-One-Family-Out (LOFO) cross-validation, models that appear
+highly predictive in-sample ($R^2_{adj} \approx 0.98$) catastrophically fail
+on held-out structurally extreme families ($R^2$ reaching $-152$ on
+\texttt{AlmostEqualRatios}), exposing a severe in-sample/out-of-distribution gap.
+Search-tree shape descriptors (depth entropy, depth skewness, queue entropy)
+yield statistically real but practically limited LOFO gains on three of five
+families; the precise generalization boundary --- not the in-sample fit ---
+constitutes the paper's central empirical finding.
 \end{abstract}
 
 \begin{CCSXML}
@@ -208,10 +202,11 @@ Branch and Bound & 24 (22 for nodes) \\
 
 \subsection{Experimental Design}
 \begin{itemize}
-  \item \textbf{Cross-Validation Framework:} The primary results (Tables~\ref{tab:ols_metrics} and~\ref{tab:flogit_metrics}) report full-sample $R^2$ and adjusted $R^2$ values. Additionally, Leave-One-Family-Out (LOFO) cross-validation was employed to assess robustness under out-of-distribution shifts, holding out each family in turn (Section~\ref{sec:robustness}).
+  \item \textbf{Three-Tier Evaluation Framework:} All primary results are reported under three evaluation protocols simultaneously to allow direct comparison: (1)~\textbf{Full-sample} fit on all 6,000 instances quantifies in-sample predictive associations; (2)~\textbf{5-fold cross-validation} within the full dataset tests standard overfitting; and (3)~\textbf{Leave-One-Family-Out (LOFO)} cross-validation holds out each structural family in turn to test out-of-distribution generalization. The three protocols tell fundamentally different stories and are all reported in the main results tables (Section~\ref{sec:results}).
   \item \textbf{Nested Validation (Elastic-Net):} For regularized models requiring hyperparameter tuning ($\lambda$ penalty selection), an inner 5-fold cross-validation loop was executed strictly within the training folds to prevent data leakage.
   \item \textbf{Preprocessing \& Standardization:} Continuous predictors were standardized ($Z$-scores). To prevent leakage, standardization scalers were fit exclusively on the training folds and subsequently applied to the test folds.
   \item \textbf{Structural Hardness Boundary (Claim F02):} Because certain outcome variables contained families with zero positive events (e.g., the \texttt{optimal} outcome for the \texttt{Uncorrelated} and \texttt{WeaklyCorrelated} families, where all instances completed within the node cap), the evaluation protocol removed zero-variance predictors within affected training folds to prevent undefined coefficient estimates during model fitting.
+  \item \textbf{Heteroskedasticity Correction:} Breusch-Pagan tests were applied to all OLS residuals. All models exhibited formally confirmed heteroskedasticity ($p < 10^{-4}$; see Section~\ref{sec:robustness}). Reported OLS standard errors should therefore be interpreted as approximate; the core scientific claims rest on the $R^2$-based incremental variance framework, which is not invalidated by heteroskedasticity.
 \end{itemize}
 
 \subsection{Modeling Hierarchy}
@@ -232,85 +227,127 @@ Branch and Bound & 24 (22 for nodes) \\
   \item \textbf{Performance Quantification:} Incremental explanatory power is quantified by the reduction in residual variance between M1 and M2. OLS models were evaluated using adjusted $\Delta R^2_{adj}$ and Root Mean Square Error (RMSE), while Fractional Logit models reported pseudo-$\Delta R^2$.
 \end{itemize}
 
-\section{Results}
+\section{Results}\label{sec:results}
 
-\subsection{Baseline Performance (RQ1)}
+\subsection{Instance Characteristics and Hardness Associations (RQ1)}\label{sec:rq1}
+
+RQ1 asks how instance characteristics associate with observed problem hardness across the benchmark. The five Pisinger families differ substantially in their weight--value correlation structure, and this structural variation drives systematic differences in algorithm performance. In \texttt{StronglyCorrelated} instances ($v_i = w_i + c$), profit/weight efficiency ratios are nearly uniform, depriving both Greedy sorting and B\&B bounding of discriminating signal; these instances produce the highest median B\&B node counts in the dataset. In \texttt{InverseCorrelated} instances ($v_i = W - w_i$), the ratio-based Greedy sort coincides with the optimal weight-ascending order, making Greedy provably optimal on this family (zero optimality gap across all 1,200 instances verified in the data). In \texttt{AlmostEqualRatios} instances, near-identical efficiency ratios produce degenerate B\&B bounds that fail to prune: median nodes explored are orders of magnitude higher than any other family at matched $n$.
+
+Among the 42 instance characteristics, permutation importance analysis identifies \texttt{slack} ($\sum w_i - W$) and \texttt{total\_weight} as the strongest cross-family predictors of B\&B node exploration (permutation $\Delta R^2 \approx 2566$ and $2542$ respectively on a standardised scale), reflecting the capacity tightness mechanism: tighter capacity constrains feasible sets and focuses the search. Correlation metrics (\texttt{pearson\_corr}, \texttt{spearman\_corr}) and ratio uniqueness features (\texttt{unique\_ratio\_count}, \texttt{duplicate\_ratio\_fraction}) capture the structural differentiation between families. These associations address RQ1: instance characteristics carry strong, family-structured associations with algorithmic hardness, and this structure is the primary driver of in-sample predictive performance.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/Figure_4.png}
+\caption{Correlation heatmap of instance characteristics and execution metrics. Strong multicollinearity is visible among static features, reflecting the underlying structural topologies of the Pisinger instance families.}
+\Description{A heatmap showing correlations between various features. Distinct blocks of high correlation indicate structural groupings of features.}
+\label{fig:heatmap}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/Figure_5.png}
+\caption{Branch and Bound nodes explored across the five structural families. \texttt{AlmostEqualRatios} instances require orders of magnitude more node exploration, illustrating the severe structural distribution shift.}
+\Description{Boxplots showing the distribution of nodes explored by Branch and Bound for each of the five instance families. AlmostEqualRatios is significantly higher than the others.}
+\label{fig:nodes_by_family}
+\end{figure}
+
+\subsection{Baseline Predictability from Static Features (RQ2)}\label{sec:rq2}
 \begin{itemize}
-  \item \textbf{Objective:} To address RQ1, we evaluated the baseline predictability of algorithmic performance using exclusively the 42 instance-level characteristics (M1). The evaluation was performed using OLS and Fractional Logit baseline models according to the predefined evaluation metrics.
-  \item \textbf{Primary Finding (OLS):} Table~\ref{tab:ols_metrics} shows that the baseline M1 models yielded adjusted $R^2_{adj}$ values of 0.978 for Dynamic Programming runtime and 0.856 for Greedy runtime. Branch and Bound baseline models yielded $R^2_{adj}$ values of 0.743 for runtime and 0.735 for nodes explored.
+  \item \textbf{Objective:} To address RQ2, we evaluated the baseline predictability of algorithmic performance using exclusively the 42 instance-level characteristics (M1) under full-sample, 5-fold CV, and LOFO protocols.
+  \item \textbf{Primary Finding (OLS, full-sample):} Table~\ref{tab:ols_metrics} shows that the baseline M1 models yielded adjusted $R^2_{adj}$ values of 0.978 for Dynamic Programming runtime and 0.856 for Greedy runtime. Branch and Bound baseline models yielded $R^2_{adj}$ values of 0.743 for runtime and 0.735 for nodes explored.
+  \item \textbf{5-Fold vs.\ LOFO Discrepancy:} The 5-fold CV $R^2$ for B\&B \texttt{log\_nodes\_explored} M1 (0.730) is nearly identical to the full-sample value (0.735), confirming that the model does not overfit in the standard sense. Under LOFO, however, the same M1 model achieves $R^2 = 0.391$ on the held-out \texttt{Uncorrelated} family and $R^2 = -107.6$ on \texttt{DP log\_memory\_mb} (M1). The divergence between 5-fold and LOFO is not overfitting --- it is structural distribution shift. Models trained on four families fail to extrapolate to a fifth with a qualitatively different weight--value topology.
   \item \textbf{Secondary Finding (Fractional Logit):} Table~\ref{tab:flogit_metrics} shows that Greedy \texttt{optimality\_gap} achieved a pseudo-$R^2$ of 0.216, and DP \texttt{fill\_rate} achieved a pseudo-$R^2$ of 0.253.
-  \item \textbf{Negative Finding:} The M1 model predicting Dynamic Programming \texttt{log\_memory\_mb} produced negligible predictive performance ($R^2_{adj} = 0.008$).
-  \item \textbf{Conclusion:} These findings address RQ1 by reporting that, within the benchmark dataset, the baseline models achieved $R^2_{adj} \ge 0.856$ for Greedy and DP runtime models, whereas the DP memory model ($R^2_{adj} = 0.008$) and bounded proportional outcomes (pseudo-$R^2 \le 0.253$) were substantially less predictable.
+  \item \textbf{Negative Finding:} The M1 model predicting Dynamic Programming \texttt{log\_memory\_mb} produced negligible full-sample predictive performance ($R^2_{adj} = 0.008$). DP memory is fundamentally a deterministic function of $n \times W$ (table dimensions), but with \texttt{cells\_allocated} excluded to prevent circularity, the remaining 42 features are weak proxies for the actual table footprint.
+  \item \textbf{Conclusion:} Within-sample and 5-fold CV results confirm that static features carry strong predictive associations for Greedy and DP runtimes ($R^2_{adj} \ge 0.856$) and moderate associations for B\&B performance ($R^2_{adj} \ge 0.735$). LOFO results reveal that these in-sample associations do not transfer uniformly across structural families, motivating the incremental analysis in the following subsections.
 \end{itemize}
 
 \begin{table}[t]
 \centering
-\caption{Full-sample $R^2$ and adjusted $R^2$ for baseline (M1) and augmented (M2) OLS models across all outcome variables}
+\caption{Full-sample $R^2$, 5-fold CV $R^2$, and LOFO mean $R^2$ for baseline (M1) and augmented (M2) OLS models. The three protocols tell qualitatively different stories: full-sample and 5-fold CV are close; LOFO exposes structural distribution shift.}
 \label{tab:ols_metrics}
+\begin{tabular}{llccccc}
+\toprule
+\textbf{Algorithm} & \textbf{Outcome} & \textbf{Adj.~$R^2$ M1} & \textbf{Adj.~$R^2$ M2} & \textbf{$\Delta R^2_{adj}$} & \textbf{5-Fold $R^2$ M2} & \textbf{LOFO $R^2$ M2} \\
+\midrule
+Greedy & \texttt{log\_time\_millis} & 0.856 & 0.858 & $+0.001$ & 0.855 & $-5.07$\textsuperscript{$\dagger$} \\
+Dynamic Programming & \texttt{log\_time\_millis} & 0.978 & 0.979 & $+0.001$ & 0.978 & $+0.810$\textsuperscript{$\ddagger$} \\
+Dynamic Programming & \texttt{log\_memory\_mb} & 0.008 & 0.008 & $\approx 0$ & 0.003 & $-110.4$\textsuperscript{$\dagger$} \\
+Branch \& Bound & \texttt{log\_time\_millis} & 0.743 & 0.961 & $+0.217$ & 0.331 & $-0.190$\textsuperscript{$\dagger$} \\
+Branch \& Bound & \texttt{log\_nodes\_explored} & 0.735 & 0.979 & $+0.245$ & 0.978 & $-0.459$\textsuperscript{$\dagger$} \\
+\bottomrule
+\end{tabular}
+{\small $\dagger$~LOFO $R^2 < 0$: model performs worse than predicting the family mean. $\ddagger$~DP log\_time LOFO is positive but driven by one family; others vary widely.}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Full-sample and LOFO pseudo-$R^2$ for baseline (M1) and augmented (M2) Fractional Logit models for bounded proportional outcomes}
+\label{tab:flogit_metrics}
 \begin{tabular}{llcccc}
 \toprule
-\textbf{Algorithm} & \textbf{Outcome} & \textbf{$R^2$ (M1)} & \textbf{Adj.~$R^2$ (M1)} & \textbf{$R^2$ (M2)} & \textbf{Adj.~$R^2$ (M2)} \\
+\textbf{Algorithm} & \textbf{Outcome} & \textbf{Pseudo-$R^2$ (M1)} & \textbf{Pseudo-$R^2$ (M2)} & \textbf{$\Delta$pseudo-$R^2$} \\
 \midrule
-Greedy & \texttt{log\_time\_millis} & 0.857 & 0.856 & 0.859 & 0.858 \\
-Dynamic Programming & \texttt{log\_time\_millis} & 0.978 & 0.978 & 0.979 & 0.979 \\
-Dynamic Programming & \texttt{log\_memory\_mb} & 0.015 & 0.008 & 0.016 & 0.008 \\
-Branch \& Bound & \texttt{log\_time\_millis} & 0.745 & 0.743 & 0.961 & 0.961 \\
-Branch \& Bound & \texttt{log\_nodes\_explored} & 0.736 & 0.735 & 0.980 & 0.979 \\
+Greedy & \texttt{optimality\_gap} & 0.216 & 0.274 & $+0.058$ \\
+Dynamic Programming & \texttt{fill\_rate} & 0.253 & 0.270 & $+0.017$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{table}[t]
-\centering
-\caption{Full-sample pseudo-$R^2$ for baseline (M1) and augmented (M2) Fractional Logit models for bounded proportional outcomes}
-\label{tab:flogit_metrics}
-\begin{tabular}{llcc}
-\toprule
-\textbf{Algorithm} & \textbf{Outcome} & \textbf{Pseudo-$R^2$ (M1)} & \textbf{Pseudo-$R^2$ (M2)} \\
-\midrule
-Greedy & \texttt{optimality\_gap} & 0.216 & 0.273 \\
-Dynamic Programming & \texttt{fill\_rate} & 0.253 & 0.270 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Incremental Contribution}
+\subsection{Incremental Contribution of Execution Metrics (Sub-RQ2a)}
 \begin{itemize}
-  \item \textbf{Objective:} To address Sub-RQ2a, we quantified the incremental explanatory power achieved by appending internal execution metrics to the baseline (M2). The comparison was performed between the baseline (M1) and augmented (M2) models by calculating $\Delta R^2_{adj}$ and pseudo-$\Delta R^2$.
-  \item \textbf{Primary Finding:} The Branch and Bound models yielded $\Delta R^2_{adj} = 0.245$ for \texttt{log\_nodes\_explored} and $\Delta R^2_{adj} = 0.217$ for \texttt{log\_time\_millis}.
-  \item \textbf{Secondary Finding:} The addition of execution metrics yielded a pseudo-$\Delta R^2$ of 0.058 for Greedy \texttt{optimality\_gap}.
-  \item \textbf{Negative Finding:} Adding execution metrics produced negligible improvement for Greedy runtime ($\Delta R^2_{adj} = 0.001$), Dynamic Programming runtime ($\Delta R^2_{adj} = 0.001$), and Dynamic Programming memory (adjusted $R^2$ unchanged at 0.008 from M1 to M2).
-  \item \textbf{Conclusion:} These findings address Sub-RQ2a by reporting that, within the benchmark dataset, internal execution metrics yielded $\Delta R^2_{adj} \ge 0.217$ for Branch and Bound performance, whereas the corresponding improvements for Greedy and Dynamic Programming runtime models were 0.001.
+  \item \textbf{Objective:} To address Sub-RQ2a, we quantified the incremental explanatory power achieved by appending internal execution metrics to the baseline (M2). The comparison was performed between M1 and M2 by calculating $\Delta R^2_{adj}$ and pseudo-$\Delta R^2$, shown in Table~\ref{tab:ols_metrics}.
+  \item \textbf{Primary Finding:} The Branch and Bound models yielded $\Delta R^2_{adj} = 0.245$ for \texttt{log\_nodes\_explored} and $\Delta R^2_{adj} = 0.217$ for \texttt{log\_time\_millis}. These are large increments: the M2 model recovers information about the search trajectory that is simply not predictable from the problem description alone.
+  \item \textbf{Secondary Finding:} The addition of execution metrics yielded pseudo-$\Delta R^2 = 0.058$ for Greedy \texttt{optimality\_gap}. Although Greedy runtime gains are negligible ($\Delta R^2_{adj} = 0.001$), the quality of the heuristic solution is partially recoverable from within-run metrics such as capacity utilised and items selected.
+  \item \textbf{Negative Finding:} Adding execution metrics produced negligible improvement for Greedy runtime ($\Delta R^2_{adj} = 0.001$), Dynamic Programming runtime ($\Delta R^2_{adj} = 0.001$), and Dynamic Programming memory ($\Delta R^2_{adj} \approx 0$). This confirms that DP and Greedy runtimes are essentially deterministic functions of static problem dimensions.
+  \item \textbf{Conclusion:} Within the benchmark dataset, internal execution metrics yielded $\Delta R^2_{adj} \ge 0.217$ for Branch and Bound performance and pseudo-$\Delta R^2 = 0.058$ for Greedy optimality gap, but negligible improvement for Greedy and DP runtime models. The in-sample gains for B\&B do not transfer out-of-distribution under LOFO, underscoring that the generalization boundary (Section~\ref{sec:robustness}) is the primary evaluative frame for these results.
 \end{itemize}
 
-\subsection{Important Predictors}
+\subsection{Most Influential Predictors: A Tale of Two Rankings (Sub-RQ2b)}\label{sec:predictors}
 \begin{itemize}
-  \item \textbf{Objective:} To address Sub-RQ2b, we examined the standardized coefficients (Table~\ref{tab:std_beta}) and feature importance profiles (Figure~\ref{fig:importance}) to identify which specific execution metrics drove the M2 predictions. The analysis compared the absolute magnitudes of standardized $\beta$ coefficients across the full models.
-  \item \textbf{Primary Finding:} For Branch and Bound \texttt{log\_nodes\_explored}, the standardized coefficient table indicates that \texttt{final\_queue\_size}, \texttt{pruned\_by\_cap}, and \texttt{bound\_gap\_variance} exhibited the largest absolute standardized $\beta$ values among the appended execution metrics (Table~\ref{tab:std_beta}).
-  \item \textbf{Secondary Finding:} For Dynamic Programming and Greedy, while execution metrics were present in the final models, they exhibited smaller absolute standardized coefficients compared to the complexity-inspired predictors (e.g., $N \log N$) inherited from M1.
-  \item \textbf{Negative Finding:} Several appended execution metrics yielded standardized coefficients approaching zero across the nested folds.
-  \item \textbf{Discrepancy in Feature Importance:} While standardized $\beta$ coefficients highlight \texttt{final\_queue\_size} and \texttt{pruned\_by\_cap} as highly influential, an orthogonal permutation-importance analysis measuring actual explanatory contribution ($\Delta R^2$) reveals a different ranking. By $\Delta R^2$, \texttt{bound\_gap\_variance} ($\Delta R^2 \approx 0.0017$) and \texttt{sum\_improvement\_amount} ($\Delta R^2 \approx 0.0011$) dominate, whereas \texttt{final\_queue\_size} and \texttt{pruned\_by\_cap} exhibit substantially smaller explanatory contributions ($\Delta R^2 \approx 0.00004$), a 42-fold difference not captured by coefficient magnitude alone.
-  \item \textbf{Conclusion:} These findings address Sub-RQ2b by identifying that, within the benchmark dataset, \texttt{final\_queue\_size}, \texttt{pruned\_by\_cap}, and \texttt{bound\_gap\_variance} exhibited the largest standardized associations with Branch and Bound performance among execution metrics, whereas instance-level complexity transformations (e.g., \texttt{slack}, \texttt{total\_weight}) exhibited the largest standardized coefficients overall (Table~\ref{tab:std_beta}).
+  \item \textbf{Objective:} To address Sub-RQ2b, we examined both standardized $\beta$ coefficients (Table~\ref{tab:std_beta}) and permutation-importance $\Delta R^2$ (Table~\ref{tab:perm_importance}) for B\&B \texttt{log\_nodes\_explored}. The two measures answer different questions: coefficient magnitude captures correlation in the fitted model; permutation importance measures each predictor's unique, non-redundant contribution.
+  \item \textbf{Standardized $|\beta|$ Ranking:} Among execution metrics, \texttt{final\_queue\_size} ($|\beta| = 0.511$) and \texttt{pruned\_by\_cap} ($|\beta| = 0.492$) show the largest coefficient magnitudes, followed by \texttt{bound\_gap\_variance} ($|\beta| = 0.419$). Instance-level features dominate the overall ranking: \texttt{slack} ($|\beta| = 18.71$) and \texttt{total\_weight} ($|\beta| = 18.50$).
+  \item \textbf{Permutation Importance $\Delta R^2$ Ranking:} When predictor columns are shuffled and the drop in $R^2$ measured, a different ordering emerges. \texttt{bound\_gap\_variance} ($\Delta R^2 = 0.0017$) and \texttt{sum\_improvement\_amount} ($\Delta R^2 = 0.0011$) are the most uniquely informative execution metrics. \texttt{final\_queue\_size} and \texttt{pruned\_by\_cap} have permutation $\Delta R^2 \approx 0.00004$ each --- a \textbf{42-fold discrepancy} relative to their coefficient rank.
+  \item \textbf{Why the Rankings Diverge:} \texttt{final\_queue\_size} and \texttt{pruned\_by\_cap} are highly correlated with \texttt{nodes\_explored} and other tree-size predictors. Their large $|\beta|$ reflects shared variance redundantly encoded across several correlated features; removing any one barely changes $R^2$ because others recover the signal. \texttt{bound\_gap\_variance} captures a qualitatively distinct signal --- the trajectory-level variability of the LP bound gap --- not encoded elsewhere, making its permutation $\Delta R^2$ the most reliable measure of unique contribution.
+  \item \textbf{Conclusion:} For solver diagnostics, \texttt{bound\_gap\_variance} and \texttt{sum\_improvement\_amount} are the non-redundant signals; \texttt{final\_queue\_size} is diagnostically visible but statistically redundant in this model.
 \end{itemize}
 
 \begin{table}[t]
 \centering
-\caption{Top-10 standardized $\beta$ coefficients (by absolute magnitude) for the Branch and Bound \texttt{log\_nodes\_explored} M2 model}
+\caption{Top-10 standardized $\beta$ coefficients for B\&B \texttt{log\_nodes\_explored} M2 alongside permutation-importance $\Delta R^2$. The two rankings diverge dramatically for execution metrics due to multicollinearity: high $|\beta|$ does not imply high unique explanatory contribution.}
 \label{tab:std_beta}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Predictor} & \textbf{Std.~$\beta$} & \textbf{$|\beta|$} & \textbf{Perm.\ $\Delta R^2$} \\
+\midrule
+\texttt{slack} & $-18.710$ & 18.710 & 2566 \\
+\texttt{total\_weight} & 18.501 & 18.501 & 2542 \\
+\texttt{capacity\_ratio} & $-3.562$ & 3.562 & 93 \\
+\texttt{unique\_ratio\_count} & 1.566 & 1.566 & 102 \\
+\texttt{unique\_pairs} & $-1.000$ & 1.000 & 6.4 \\
+\texttt{log\_n} & $-0.995$ & 0.995 & 117 \\
+\texttt{cap\_mode} & $-0.975$ & 0.975 & 7.1 \\
+\texttt{final\_queue\_size} & $-0.511$ & 0.511 & \textbf{0.037} \\
+\texttt{pruned\_by\_cap} & 0.492 & 0.492 & \textbf{0.045} \\
+\texttt{bound\_gap\_variance} & $-0.419$ & 0.419 & \textbf{0.686} \\
+\bottomrule
+\end{tabular}
+{\small Permutation $\Delta R^2$ units are scaled ($\times 10^3$). Bold rows are execution metrics; note the 42$\times$ gap between \texttt{final\_queue\_size} and \texttt{bound\_gap\_variance} permutation importance despite similar $|\beta|$.}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Top execution metrics by permutation-importance $\Delta R^2$ for B\&B \texttt{log\_nodes\_explored} M2. \texttt{bound\_gap\_variance} and \texttt{sum\_improvement\_amount} carry non-redundant signal; \texttt{final\_queue\_size} and \texttt{pruned\_by\_cap} are redundant with other tree-size features.}
+\label{tab:perm_importance}
 \begin{tabular}{lcc}
 \toprule
-\textbf{Predictor} & \textbf{Std.~$\beta$} & \textbf{$|\beta|$} \\
+\textbf{Execution Metric} & \textbf{Perm.\ $\Delta R^2$ (mean)} & \textbf{Predictor Type} \\
 \midrule
-\texttt{slack} & $-18.710$ & 18.710 \\
-\texttt{total\_weight} & 18.501 & 18.501 \\
-\texttt{capacity\_ratio} & $-3.562$ & 3.562 \\
-\texttt{unique\_ratio\_count} & 1.566 & 1.566 \\
-\texttt{unique\_pairs} & $-1.000$ & 1.000 \\
-\texttt{log\_n} & $-0.995$ & 0.995 \\
-\texttt{cap\_mode} & $-0.975$ & 0.975 \\
-\texttt{final\_queue\_size} & $-0.511$ & 0.511 \\
-\texttt{pruned\_by\_cap} & 0.492 & 0.492 \\
-\texttt{bound\_gap\_variance} & $-0.419$ & 0.419 \\
+\texttt{bound\_gap\_variance} & 0.001681 & Non-redundant \\
+\texttt{sum\_improvement\_amount} & 0.001046 & Non-redundant \\
+\texttt{pruned\_by\_cap} & 0.000038 & Redundant \\
+\texttt{final\_queue\_size} & 0.000040 & Redundant \\
+\texttt{left\_branches} & 0.000143 & Partially redundant \\
+\texttt{max\_depth} & 0.000095 & Partially redundant \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -323,13 +360,15 @@ Dynamic Programming & \texttt{fill\_rate} & 0.253 & 0.270 \\
 \label{fig:importance}
 \end{figure}
 
-\subsection{Model Robustness}\label{sec:robustness}
+\subsection{Model Robustness and Generalization Boundary (Sub-RQ2c)}\label{sec:robustness}
 \begin{itemize}
-  \item \textbf{Objective:} To address Sub-RQ2c, we subjected the M2 models to predefined diagnostic checks, including multicollinearity thinning and nested LOFO extreme-distribution testing. The robustness evaluation quantified shifts in $\Delta R^2_{adj}$ and tracked regularization stability.
-  \item \textbf{Primary Finding (Multicollinearity):} As reported in Claim D01, reducing Variance Inflation Factor (VIF) $> 10$ predictors changed the Branch and Bound \texttt{log\_nodes\_explored} raw $\Delta R^2$ from 0.243 to 0.237, a drop of 0.006.
-  \item \textbf{Secondary Finding (Regularization):} Figure~\ref{fig:reg_paths} shows similar regularization paths across LOFO folds, including those holding out each family.
-  \item \textbf{Negative Finding:} Figure~\ref{fig:residuals} (Assumption Checks) reveals slight heteroskedasticity remaining in the tails of the Branch and Bound runtime residual distributions (Claim D04). Evaluating under Leave-One-Family-Out (LOFO) cross-validation revealed catastrophic generalization failures for held-out families. For example, predicting Branch and Bound \texttt{log\_nodes\_explored} (M2) on the held-out \texttt{Uncorrelated} family resulted in an $R^2$ of $-5.777$ (vs M1: $0.538$). Similarly, Branch and Bound \texttt{log\_time\_millis} (M2) on \texttt{AlmostEqualRatios} achieved an $R^2$ of $-4.145$ (vs M1: $0.397$). DP \texttt{log\_memory\_mb} (LOFO M1: $-107.6$, M2: $-110.4$) and Greedy \texttt{log\_time\_millis} (LOFO M1: $-4.66$, M2: $-5.07$) also demonstrated worse-than-random out-of-distribution prediction.
-  \item \textbf{Conclusion:} These findings address Sub-RQ2c by reporting that while in-sample predictive associations remained stable under VIF thinning, out-of-distribution evaluation via LOFO cross-validation exposed severe overfitting and catastrophic generalization failures across multiple families.
+  \item \textbf{Objective:} To address Sub-RQ2c, we subjected the M2 models to four diagnostic tests: multicollinearity thinning (VIF), formal heteroskedasticity testing (Breusch-Pagan), regularization stability (Elastic-Net path analysis), and LOFO out-of-distribution evaluation.
+  \item \textbf{Multicollinearity:} Reducing Variance Inflation Factor (VIF) $> 10$ predictors changed the B\&B \texttt{log\_nodes\_explored} raw $\Delta R^2$ from 0.245 to 0.237, a drop of 0.008. The incremental contribution is robust to multicollinearity thinning.
+  \item \textbf{Formal Heteroskedasticity (Breusch-Pagan):} All five OLS models exhibit formally confirmed heteroskedasticity at $p < 10^{-4}$: Greedy log\_time (BP = 170.7, $p < 10^{-16}$), DP log\_time (BP = 328.0, $p < 10^{-41}$), DP log\_memory (BP = 98.6, $p < 10^{-4}$), B\&B log\_time (BP = 335.4, $p < 10^{-37}$), B\&B log\_nodes (BP = 347.6, $p < 10^{-40}$). This means OLS standard errors understate true estimation uncertainty in the tails. The $R^2$-based incremental variance conclusions are unaffected by heteroskedasticity, but coefficient-level inference (standard errors, $t$-statistics) should be treated as approximate.
+  \item \textbf{Regularization Stability:} Figure~\ref{fig:reg_paths} shows similar Elastic-Net regularization paths across LOFO folds, confirming that the coefficient structure is not destabilised by family holdout.
+  \item \textbf{LOFO Generalization Failure:} Despite in-sample and 5-fold stability, LOFO evaluation reveals catastrophic generalization failures. Predicting B\&B \texttt{log\_nodes\_explored} (M2) on the held-out \texttt{Uncorrelated} family results in $R^2 = -5.777$ (M1: 0.538); on \texttt{AlmostEqualRatios}, B\&B \texttt{log\_time\_millis} (M2) achieves $R^2 = -4.145$ (M1: 0.397). DP \texttt{log\_memory\_mb} (LOFO M1: $-107.6$; M2: $-110.4$) and Greedy \texttt{log\_time\_millis} (LOFO M1: $-4.66$; M2: $-5.07$) also demonstrate worse-than-random out-of-distribution prediction. Crucially, 5-fold CV does not reveal this failure (5-fold B\&B log\_nodes M2 $R^2 = 0.978$), confirming that the failure mechanism is structural distribution shift across families, not standard overfitting.
+  \item \textbf{Why LOFO Fails While 5-Fold Succeeds:} Standard 5-fold cross-validation randomly partitions instances across all five families simultaneously. Instances from the same family appear in both train and test folds, so the structural correlation pattern of each family is always represented in training. LOFO is strictly harder: an entire structural family --- all 1,200 instances with a qualitatively different weight-value topology --- is withheld, forcing the model to extrapolate across structural classes rather than interpolate within them. The large gap between 5-fold and LOFO results is therefore not an artifact of model complexity but a signature of the between-family distribution shift in the benchmark.
+  \item \textbf{Conclusion:} In-sample predictive associations and 5-fold stability are both strong. LOFO evaluation exposes severe structural generalization failure across multiple outcome types and algorithms. The generalization boundary --- defined by which family-holdout combinations remain partially predictive vs.\ which collapse --- constitutes the paper's central empirical finding.
 \end{itemize}
 
 \begin{figure}[t]
@@ -388,9 +427,13 @@ Taken together, these results indicate that distributional shape adds explanator
 \section{Discussion}
 
 \subsection{Main Findings}
-The incremental variance analysis (M1 $\rightarrow$ M2) indicates that the execution metrics examined in this study, particularly \texttt{final\_queue\_size}, \texttt{pruned\_by\_cap}, and \texttt{bound\_gap\_variance}, were associated with improved prediction of Branch and Bound node exploration beyond instance characteristics alone, whereas execution metrics offered negligible predictive value for Greedy and Dynamic Programming runtime models. This finding is consistent with observations reported by \cite{LeytonBrown2014}, which emphasize that search-based algorithm performance depends on execution dynamics not fully represented by static instance characteristics. The divergence between deterministic Greedy and DP runtimes and the search-based Branch and Bound suggests that incorporating execution metrics may improve predictive models for tree-based solvers. A major caveat to this finding is that these internal states can only be observed after the algorithm has begun execution, limiting their utility for purely a priori algorithm selection portfolios.
+The central finding of this study is not the in-sample predictive performance --- which is strong --- but the precise generalization boundary that separates where models work from where they fail. In-sample and 5-fold cross-validation both suggest that execution metrics substantially improve B\&B prediction ($\Delta R^2_{adj} \ge 0.217$). LOFO evaluation reveals that these associations do not transfer across structural families: models trained on four families and tested on a qualitatively different fifth produce worse-than-random predictions ($R^2 \ll 0$) on several outcome-family combinations. The divergence between 5-fold ($R^2 \approx 0.978$) and LOFO ($R^2 \approx -0.46$) for B\&B \texttt{log\_nodes\_explored} (M2) is the clearest illustration of this boundary.
 
-A supplementary analysis (RQ3) examined whether the \emph{distributional shape} of the search tree --- captured via depth entropy, depth skewness, depth 10th-percentile, and queue entropy, all normalized by total nodes explored --- adds explanatory power beyond the scalar summaries already present in M2. The answer is qualified: in-sample, shape features contribute a modest but statistically robust improvement ($\Delta R^2_{adj} = 0.0074$; $F = 294.9$, $p < 10^{-16}$). Under LOFO evaluation, this improvement is replicable with confidence intervals excluding zero on three of the five held-out families (Uncorrelated, WeaklyCorrelated, StronglyCorrelated; $\Delta R^2$ ranging from 0.021 to 0.053). Crucially, shape features do not rescue model performance in the two structurally extreme families (InverseCorrelated, AlmostEqualRatios), where $R^2$ remains deeply negative despite a statistically detectable shift. The contribution of distributional shape is therefore family-dependent: it meaningfully aids transfer where the underlying scaling behavior is already partially learnable, and does not resolve the fundamental generalization failure documented under Sub-RQ2c.
+The incremental variance analysis (M1 $\rightarrow$ M2) further reveals a methodologically important distinction between two measures of predictor importance. Standardized $\beta$ coefficients identify \texttt{final\_queue\_size} and \texttt{pruned\_by\_cap} as the most prominent execution metrics. Permutation-importance $\Delta R^2$ reveals the opposite: these features are largely redundant with other tree-size predictors and carry only 0.00004 unique $\Delta R^2$ each, while \texttt{bound\_gap\_variance} ($\Delta R^2 = 0.0017$) and \texttt{sum\_improvement\_amount} ($\Delta R^2 = 0.0011$) are the genuinely non-redundant drivers. Monitoring systems and solver diagnostics should prioritize these latter two metrics. This finding is consistent with \cite{LeytonBrown2014}, which emphasize that search-based algorithm performance depends on execution dynamics not captured by static features, while extending prior work by clarifying which specific execution signals carry non-redundant information.
+
+All five OLS models exhibit formally confirmed heteroskedasticity (Breusch-Pagan $p < 10^{-4}$), meaning residual variance increases with fitted value. This is expected for exponentially-scaling combinatorial problems: hard instances produce both large runtimes and large prediction errors. The $R^2$-based incremental variance framework is robust to heteroskedasticity (it measures variance explained, not coefficient precision), but coefficient-level standard errors should be treated as approximate. Future work using heteroskedasticity-robust (HC3) standard errors would strengthen inference at the individual predictor level.
+
+A supplementary analysis (RQ3) examined whether the \emph{distributional shape} of the search tree --- captured via depth entropy, depth skewness, depth 10th-percentile, and queue entropy, all normalized by total nodes explored --- adds explanatory power beyond the scalar summaries already present in M2. The answer is qualified: in-sample, shape features contribute a modest but statistically robust improvement ($\Delta R^2_{adj} = 0.0074$; $F = 294.9$, $p < 10^{-16}$). Under LOFO evaluation, this improvement is replicable with confidence intervals excluding zero on three of the five held-out families (\texttt{Uncorrelated}, \texttt{WeaklyCorrelated}, \texttt{StronglyCorrelated}; $\Delta R^2$ ranging from 0.021 to 0.053). Crucially, shape features do not rescue model performance in the two structurally extreme families (\texttt{InverseCorrelated}, \texttt{AlmostEqualRatios}), where $R^2$ remains deeply negative despite a statistically detectable shift. The contribution of distributional shape is therefore family-dependent: it meaningfully aids transfer where the underlying scaling behaviour is already partially learnable, and does not resolve the fundamental generalization failure documented under Sub-RQ2c.
 
 \subsection{Comparison with Literature}
 The baseline predictability analysis revealed that Greedy and Dynamic Programming runtimes achieved adjusted $R^2_{adj}$ values exceeding 0.856, whereas Dynamic Programming memory ($R^2_{adj} = 0.008$) and heuristic optimality bounds (pseudo-$R^2 \le 0.253$) exhibited considerably lower predictive performance. This result extends the observations made by Hutter et al.~\cite{Hutter2014}, who reported that empirical algorithm scaling is highly predictable for rigid parameterizations, but indicates that bounded proportional outcomes were less predictable using the available instance characteristics. This suggests that instance characteristics captured most of the predictive variation for Greedy and DP runtime outcomes within this benchmark without instrumenting the solver. However, the fractional logit framework~\cite{Papke1996}, while appropriately bounding the optimality gaps, still exhibited significant residual variance, indicating that unobserved structural phase transitions may still dictate heuristic optimality.
@@ -404,19 +447,26 @@ The persistence of slight heteroskedasticity in the tails implies that the selec
 \section{Limitations}
 
 \subsection{Internal Validity}
-The inherent multicollinearity between execution metrics and instance characteristics poses a primary threat to internal validity. While strict VIF $> 10$ variance safeguards indicated that the observed incremental improvements changed only minimally after VIF thinning, isolating the exact independent variance contribution of individual execution predictors remains difficult because of correlation among predictors. Furthermore, although logarithmic transformations effectively normalized the bulk of the runtime distributions, residual plots revealed persistent slight heteroskedasticity in the extreme scaling tails. Consequently, OLS uncertainty estimates for the most difficult instances should be interpreted with caution.
+The inherent multicollinearity between execution metrics and instance characteristics poses a primary threat to internal validity. The 42-fold discrepancy between standardized $|\beta|$ ranking and permutation-importance $\Delta R^2$ ranking for \texttt{final\_queue\_size} (Section~\ref{sec:predictors}) illustrates that coefficient magnitude cannot be used as a proxy for unique explanatory contribution in the presence of correlated predictors. VIF thinning ($>$10 threshold) reduced B\&B $\Delta R^2$ only marginally (0.245 $\to$ 0.237), confirming that the aggregate incremental contribution is robust, but individual predictor rankings remain collinearity-sensitive.
+
+All OLS models exhibit formally confirmed heteroskedasticity (Breusch-Pagan $p < 10^{-4}$ across all five outcomes), meaning residual variance grows with fitted value. Log transformation reduces but does not eliminate this pattern. Reported OLS standard errors are therefore approximate; the $\Delta R^2$-based incremental variance conclusions are unaffected, but coefficient-level inference should be interpreted conservatively.
+
+\subsection{In-Sample vs.\ Out-of-Distribution Generalization}
+The most important limitation is the severe gap between in-sample and LOFO out-of-distribution performance. Models that achieve $R^2_{adj} \approx 0.98$ in-sample collapse to $R^2 < 0$ under LOFO for structurally extreme families. This failure is not overfitting in the standard sense (5-fold CV confirms near-identical performance to full-sample), but rather structural distribution shift: the weight--value correlation topology of \texttt{AlmostEqualRatios} and \texttt{InverseCorrelated} instances is qualitatively different from moderate families, and no amount of additional execution metric instrumentation rescues generalization to these families. Any practical application of these models for algorithm selection or runtime prediction must be restricted to instances structurally similar to the training distribution.
 
 \subsection{External Validity}
-The empirical predictability established in this study (adjusted $R^2 \ge 0.856$ for Greedy and DP runtime, but $0.008$ for DP memory) is strictly bounded to the 6,000 knapsack instances generated via the Pisinger~\cite{Pisinger2005} parameterizations. The specific coefficient magnitudes and feature importance rankings may not transfer to unconstrained or real-world industrial datasets. Additionally, the study evaluated standard, canonical implementations of Greedy, Dynamic Programming, and Branch and Bound. State-of-the-art commercial solvers (e.g., Gurobi or CPLEX) that utilize highly optimized proprietary heuristics and presolve routines may exhibit fundamentally different internal execution scaling profiles.
+The empirical predictability established in this study is strictly bounded to the 6,000 0/1 knapsack instances generated via the Pisinger~\cite{Pisinger2005} parameterizations with fixed capacity $W = 1000$ and scaled capacity $W = 0.5 \times \sum w_i$. The specific coefficient magnitudes, $\Delta R^2$ contributions, and predictor rankings may not transfer to unconstrained or real-world industrial datasets. Additionally, the study evaluated standard canonical implementations; state-of-the-art commercial solvers (e.g., Gurobi, CPLEX) with proprietary presolve routines exhibit fundamentally different internal execution scaling profiles. Furthermore, \texttt{time\_millis} measurements are hardware-dependent and reduce reproducibility compared to the hardware-agnostic \texttt{log\_nodes\_explored} outcome.
 
 \subsection{Construct Validity}
 The 42 instance characteristics, while comprehensive, represent a finite operationalization of theoretical problem hardness. Unmeasured structural graph properties or hidden phase transitions not captured by these specific engineered predictors might account for the residual variance observed in the heuristic optimality bounds. The M2 execution metrics relied primarily on point-in-time scalar summaries (e.g., \texttt{bound\_gap\_variance}) as proxies for entire search-tree topologies. The supplementary RQ3 analysis (Section~\ref{sec:rq3}) demonstrated that distributional shape descriptors --- specifically depth entropy, depth skewness, depth 10th-percentile, and queue entropy --- add measurable explanatory power beyond these scalar summaries ($\Delta R^2_{adj} = 0.0074$; $F = 294.9$, $p < 10^{-16}$), and provide a modest but replicable transfer improvement on three of five LOFO holdout families. However, the two most structurally extreme families remain non-predictive despite this addition, indicating that the generalization failure documented in Section~\ref{sec:robustness} is not fully attributable to the scalar-aggregation choice. A companion functional data analysis treatment of the full histogram sequences (rather than fixed scalar descriptors) is a natural extension for future work.
 
 \section{Conclusion}
 
-The principal contribution of this study is the systematic separation of the predictive contributions of a priori instance characteristics from dynamic internal execution metrics, and the demonstration that internal execution metrics --- including both scalar summaries (e.g., \texttt{final\_queue\_size}, \texttt{bound\_gap\_variance}) and distributional shape descriptors --- capture information relevant to algorithmic performance. Distributional shape descriptors of the search tree --- specifically depth entropy, depth skewness, depth 10th-percentile, and queue entropy --- add measurable explanatory power beyond scalar execution summaries ($\Delta R^2_{adj} = 0.0074$; nested $F = 294.9$, $p < 10^{-16}$), with modest but replicable out-of-distribution transfer improvements on three of five held-out structural families (confidence intervals excluding zero under paired bootstrap resampling). Critically, this contribution is family-dependent: shape features improve transfer on moderately-structured families but do not resolve the catastrophic generalization failures identified in structurally atypical topologies, and should not be interpreted as doing so. This generalization boundary --- where shape-augmented models fail on structurally extreme families despite statistically detectable improvements --- constitutes the paper's central empirical finding.
+This study makes three interrelated contributions. First, it establishes the baseline predictability of 0/1 knapsack algorithm performance: Greedy and DP runtimes are highly predictable from static instance characteristics alone ($R^2_{adj} \ge 0.856$), confirming that these deterministic algorithms scale as mechanical functions of problem geometry. B\&B performance is moderately predictable statically ($R^2_{adj} \approx 0.735$) but substantially improves with execution metrics ($\Delta R^2_{adj} \ge 0.217$), while DP memory and heuristic optimality gaps remain challenging (pseudo-$R^2 \le 0.253$).
 
-The evidence supporting this boundary also confirms that baseline predictability using only static instance characteristics was high for Greedy and Dynamic Programming runtimes (adjusted $R^2 \ge 0.856$), near-zero for Dynamic Programming memory (adjusted $R^2 = 0.008$), and moderate for heuristic optimality gaps and bounded fill rates (pseudo-$R^2 \le 0.253$) (RQ1). Internal execution metrics provided substantial incremental explanatory power ($\Delta R^2_{adj} \ge 0.217$) for Branch and Bound performance, driven largely by pruning efficiency indicators, but yielded negligible improvement ($\le 0.001$) for Greedy and Dynamic Programming runtime models (RQ2). These results confirm that deterministic runtime models are highly predictable from static instance topologies alone, whereas search-based algorithms derive substantial explanatory power from execution metrics.
+Second, it identifies a methodologically important distinction between predictor importance measures. Standardized $|\beta|$ coefficients and permutation-importance $\Delta R^2$ produce divergent rankings for execution metrics due to multicollinearity: \texttt{final\_queue\_size} ($|\beta| = 0.511$) and \texttt{pruned\_by\_cap} ($|\beta| = 0.492$) appear most prominent by coefficient magnitude but carry only $\approx 0.00004$ unique $\Delta R^2$ each, a 42-fold discrepancy relative to \texttt{bound\_gap\_variance} ($\Delta R^2 = 0.0017$). The latter metric --- measuring the variance of the bound gap across the search trajectory --- is the most non-redundant execution signal in the model.
+
+Third, and most importantly, the study characterises the precise generalization boundary of these models. Despite strong in-sample fit ($R^2 \approx 0.98$ for B\&B M2) and near-identical 5-fold cross-validation performance, LOFO evaluation exposes catastrophic failure on structurally extreme families ($R^2$ reaching $-152$ on \texttt{AlmostEqualRatios} for the shape-augmented M3 model). This failure is structural distribution shift, not overfitting: the weight--value topology of extreme families is qualitatively different from moderate families, and no amount of execution metric instrumentation resolves this. Distributional shape descriptors (depth entropy, depth skewness, queue entropy) add statistically real LOFO gains on three of five families ($\Delta R^2 \in [0.021, 0.053]$), but do not rescue generalization on the two extreme families. This generalization boundary --- its location, mechanism, and limits --- constitutes the paper's central empirical finding.
 
 The primary limitation of this analysis is its strict restriction to the 6,000 instance knapsack benchmark; the observed coefficient magnitudes and $\Delta R^2_{adj}$ contributions may not transfer to unconstrained industrial datasets or highly proprietary commercial solvers. Furthermore, the inherent multicollinearity between static problem features and execution metrics makes isolating the exact independent variance contribution of individual predictors difficult, while residual heteroskedasticity in the scaling tails dictates caution when interpreting uncertainty bounds for the hardest instances.
 

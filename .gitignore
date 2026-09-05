@@ -22,3 +22,21 @@ out/*
 !out/results/
 out/results/*
 !out/results/full_experiment.csv
+
+# Python Virtual Environments
+venv/
+.venv/
+env/
+.env/
+
+# LaTeX and PDF generation artifacts
+Submission_Package/tectonic
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
