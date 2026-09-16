@@ -10,7 +10,7 @@ def fit_ols(
     X: pd.DataFrame, y: np.ndarray
 ) -> sm.regression.linear_model.RegressionResultsWrapper:
     X_with_const = sm.add_constant(X.astype(float), prepend=True, has_constant='add')
-    model = sm.OLS(y.astype(float), X_with_const).fit()
+    model = sm.OLS(y.astype(float), X_with_const).fit(cov_type='HC3')
     return model
 
 
@@ -363,3 +363,42 @@ def predict_hurdle(model: Dict, X: pd.DataFrame) -> np.ndarray:
     e_pos = model['part2'].predict(X_with_const).values
     return p_pos * e_pos
 
+
+class RandomForestModel:
+    def __init__(self, is_classification: bool = False):
+        self.is_classification = is_classification
+        if self.is_classification:
+            from sklearn.ensemble import RandomForestClassifier
+            self.model = RandomForestClassifier(random_state=42)
+        else:
+            from sklearn.ensemble import RandomForestRegressor
+            self.model = RandomForestRegressor(random_state=42)
+
+    def fit(self, X: pd.DataFrame, y: np.ndarray):
+        self.model.fit(X.astype(float), y.astype(float))
+        return self
+
+    def predict(self, X: pd.DataFrame) -> np.ndarray:
+        if self.is_classification:
+            return self.model.predict_proba(X.astype(float))[:, 1]
+        return self.model.predict(X.astype(float))
+
+
+class GradientBoostingModel:
+    def __init__(self, is_classification: bool = False):
+        self.is_classification = is_classification
+        if self.is_classification:
+            from sklearn.ensemble import HistGradientBoostingClassifier
+            self.model = HistGradientBoostingClassifier(random_state=42)
+        else:
+            from sklearn.ensemble import HistGradientBoostingRegressor
+            self.model = HistGradientBoostingRegressor(random_state=42)
+
+    def fit(self, X: pd.DataFrame, y: np.ndarray):
+        self.model.fit(X.astype(float), y.astype(float))
+        return self
+
+    def predict(self, X: pd.DataFrame) -> np.ndarray:
+        if self.is_classification:
+            return self.model.predict_proba(X.astype(float))[:, 1]
+        return self.model.predict(X.astype(float))

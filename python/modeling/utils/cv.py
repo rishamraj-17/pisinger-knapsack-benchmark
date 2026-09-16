@@ -89,3 +89,42 @@ def stratified_bootstrap(
             all_boot_idx.append(boot_fam)
         resample_idx = np.concatenate(all_boot_idx)
         yield resample_idx
+
+from sklearn.model_selection import GroupKFold
+
+class ConfigHoldoutSplitter:
+    def __init__(self, n_splits: int = 5):
+        self.n_splits = n_splits
+
+    def split(self, df: pd.DataFrame) -> Generator[Tuple[np.ndarray, np.ndarray, int], None, None]:
+        groups = df["family"].astype(str) + "_" + df["capacity_mode"].astype(str) + "_" + df["n"].astype(str)
+        gkf = GroupKFold(n_splits=self.n_splits)
+        for fold_idx, (train_idx, test_idx) in enumerate(gkf.split(np.zeros(len(df)), groups=groups)):
+            yield train_idx, test_idx, fold_idx
+
+    def get_n_splits(self) -> int:
+        return self.n_splits
+
+class SizeExtrapolationSplitter:
+    def split(self, df: pd.DataFrame) -> Generator[Tuple[np.ndarray, np.ndarray, str], None, None]:
+        train_mask = df["n"] <= 200
+        test_mask = df["n"] >= 500
+        train_idx = np.where(train_mask)[0]
+        test_idx = np.where(test_mask)[0]
+        if len(train_idx) > 0 and len(test_idx) > 0:
+            yield train_idx, test_idx, "n500_1000"
+
+    def get_n_splits(self) -> int:
+        return 1
+
+class CapacityExtrapolationSplitter:
+    def split(self, df: pd.DataFrame) -> Generator[Tuple[np.ndarray, np.ndarray, str], None, None]:
+        train_mask = df["capacity_mode"] == "FIXED"
+        test_mask = df["capacity_mode"] == "SCALED"
+        train_idx = np.where(train_mask)[0]
+        test_idx = np.where(test_mask)[0]
+        if len(train_idx) > 0 and len(test_idx) > 0:
+            yield train_idx, test_idx, "SCALED"
+
+    def get_n_splits(self) -> int:
+        return 1

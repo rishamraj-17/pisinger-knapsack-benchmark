@@ -1,0 +1,6 @@
+fold,selected_features,n_selected,r2_m2,r2_m3,delta_r2
+Uncorrelated,"depth_p10, depth_entropy, depth_skew, queue_entropy",4,-5.777174575760476,-5.6220451927098845,0.15512938305059176
+WeaklyCorrelated,"depth_p10, depth_entropy, depth_skew, queue_entropy",4,0.9673457884916985,0.9675776646446814,0.00023187615298292386
+StronglyCorrelated,"depth_p10, depth_entropy, depth_skew, queue_entropy",4,0.9076213819928601,0.9077695931687629,0.00014821117590280153
+InverseCorrelated,"depth_p10, depth_entropy, depth_skew, queue_entropy",4,0.754894464364364,0.7693618171821796,0.014467352817815526
+AlmostEqualRatios,"depth_p10, depth_entropy, depth_skew, queue_entropy",4,0.9498965090931749,0.949777865975919,-0.00011864311725595655

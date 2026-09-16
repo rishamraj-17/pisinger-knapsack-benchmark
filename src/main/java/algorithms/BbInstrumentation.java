@@ -93,9 +93,86 @@ public final class BbInstrumentation {
     private int[] improvementNodes;
     private int improvementIdx;
 
+    // -----------------------------------------------------------------------
+    // Snapshot logic
+    // -----------------------------------------------------------------------
+    private long[] snapshotTargets;
+    private int nextSnapshotIndex;
+    private java.util.List<BbInstrumentation> snapshots;
+
     public BbInstrumentation() {
         improvementDepths = new int[maxImprovements];
         improvementNodes = new int[maxImprovements];
+    }
+
+    public BbInstrumentation(long[] snapshotTargets) {
+        this();
+        if (snapshotTargets != null) {
+            this.snapshotTargets = java.util.Arrays.copyOf(snapshotTargets, snapshotTargets.length);
+            this.snapshots = new java.util.ArrayList<>();
+        }
+    }
+
+    private BbInstrumentation(BbInstrumentation other) {
+        this.instanceId = other.instanceId;
+        this.n = other.n;
+        this.family = other.family;
+        this.capacity = other.capacity;
+        this.seed = other.seed;
+        this.nodesExplored = other.nodesExplored;
+        this.leafNodes = other.leafNodes;
+        this.internalNodes = other.internalNodes;
+        this.maxDepth = other.maxDepth;
+        this.sumDepth = other.sumDepth;
+        this.sumDepthSq = other.sumDepthSq;
+        this.minDepth = other.minDepth;
+        this.depthHistogram = other.depthHistogram.clone();
+        this.maxQueueSize = other.maxQueueSize;
+        this.sumQueueSize = other.sumQueueSize;
+        this.queueSamples = other.queueSamples;
+        this.queueHistogram = other.queueHistogram.clone();
+        this.finalQueueSize = other.finalQueueSize;
+        this.sumBound = other.sumBound;
+        this.sumBoundSq = other.sumBoundSq;
+        this.minBound = other.minBound;
+        this.maxBound = other.maxBound;
+        this.sumBoundGap = other.sumBoundGap;
+        this.sumBoundGapSq = other.sumBoundGapSq;
+        this.prunedByBound = other.prunedByBound;
+        this.prunedByCap = other.prunedByCap;
+        this.leftBranches = other.leftBranches;
+        this.rightBranches = other.rightBranches;
+        this.skippedLeftInfeasible = other.skippedLeftInfeasible;
+        this.skippedLeftBound = other.skippedLeftBound;
+        this.skippedRightBound = other.skippedRightBound;
+        this.skippedByCap = other.skippedByCap;
+        this.nodesGenerated = other.nodesGenerated;
+        this.improvementCount = other.improvementCount;
+        this.sumImprovementAmount = other.sumImprovementAmount;
+        this.firstImprovementNode = other.firstImprovementNode;
+        this.firstImprovementSet = other.firstImprovementSet;
+        this.lastImprovementNode = other.lastImprovementNode;
+        this.maxImprovements = other.maxImprovements;
+        this.improvementDepths = other.improvementDepths.clone();
+        this.improvementNodes = other.improvementNodes.clone();
+        this.improvementIdx = other.improvementIdx;
+    }
+
+    public boolean shouldTakeSnapshot(long nodesExplored) {
+        return snapshotTargets != null && nextSnapshotIndex < snapshotTargets.length && nodesExplored >= snapshotTargets[nextSnapshotIndex];
+    }
+
+    public void takeSnapshot() {
+        if (snapshotTargets != null) {
+            while (nextSnapshotIndex < snapshotTargets.length && this.nodesExplored >= snapshotTargets[nextSnapshotIndex]) {
+                snapshots.add(new BbInstrumentation(this));
+                nextSnapshotIndex++;
+            }
+        }
+    }
+
+    public java.util.List<BbInstrumentation> getSnapshots() {
+        return snapshots;
     }
 
     // -----------------------------------------------------------------------

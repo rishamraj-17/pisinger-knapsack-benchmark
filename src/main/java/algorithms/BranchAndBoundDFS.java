@@ -5,18 +5,12 @@ import model.KnapsackInstance;
 import model.Result;
 
 import java.util.Comparator;
-import java.util.PriorityQueue;
+import java.util.Stack;
 
-public final class BranchAndBound implements Algorithm {
+public final class BranchAndBoundDFS implements Algorithm {
     private static final long MAX_NODES = 50_000_000L;
 
-    // MAX_NODES acts as a safety cap for untimed contexts (JIT warmup, per-instance warmup).
-    // 50M nodes is generous enough to find optimal solutions for n≤500 instances with
-    // fractional-bound pruning while preventing runaway computation in untimed warmup loops.
-    // For timed runs, the 30-second thread timeout is the primary mechanism; MAX_NODES
-    // rarely triggers because the interrupt flag (checked below) terminates first.
-
-    private static class Node implements Comparable<Node> {
+    private static class Node {
         final int level;
         final int value;
         final int weight;
@@ -28,16 +22,11 @@ public final class BranchAndBound implements Algorithm {
             this.weight = weight;
             this.bound = bound;
         }
-
-        @Override
-        public int compareTo(Node other) {
-            return Double.compare(other.bound, this.bound);
-        }
     }
 
     @Override
     public String getName() {
-        return "BranchAndBound";
+        return "BranchAndBoundDFS";
     }
 
     @Override
@@ -45,8 +34,6 @@ public final class BranchAndBound implements Algorithm {
         return solve(instance, null);
     }
 
-    // Called from BbInstrumentationRunner with non-null stats.
-    // When stats is null, behaviour is identical to the original solve().
     public Result solve(KnapsackInstance instance, BbInstrumentation stats) {
         long startMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
         long startTime = System.nanoTime();
@@ -65,9 +52,10 @@ public final class BranchAndBound implements Algorithm {
             prefixValue[i + 1] = prefixValue[i] + sorted[i].getValue();
         }
 
-        PriorityQueue<Node> pq = new PriorityQueue<>();
+        Stack<Node> stack = new Stack<>();
         double rootBound = fractionalBound(0, 0, 0, sorted, capacity, n, prefixWeight, prefixValue);
-        pq.add(new Node(0, 0, 0, rootBound));
+        stack.push(new Node(0, 0, 0, rootBound));
+        
         if (stats != null) {
             stats.setInstanceId(instance.getId());
             stats.setN(n);
@@ -83,19 +71,20 @@ public final class BranchAndBound implements Algorithm {
         int maxQueueSize = 1;
         boolean searchCompleted = true;
 
-        while (!pq.isEmpty()) {
+        while (!stack.isEmpty()) {
             if (Thread.currentThread().isInterrupted()) {
-                throw new RuntimeException("BranchAndBound interrupted at node " + nodesExplored);
+                throw new RuntimeException("BranchAndBoundDFS interrupted at node " + nodesExplored);
             }
             if (nodesExplored >= MAX_NODES) {
                 searchCompleted = false;
                 break;
             }
 
-            Node node = pq.poll();
+            Node node = stack.pop();
             nodesExplored++;
+            
             if (stats != null) {
-                stats.recordNodeExplored(node.level, node.bound, bestValue, pq.size());
+                stats.recordNodeExplored(node.level, node.bound, bestValue, stack.size());
             }
             if (stats != null && stats.shouldTakeSnapshot(nodesExplored)) {
                 stats.takeSnapshot();
@@ -115,6 +104,18 @@ public final class BranchAndBound implements Algorithm {
             int nextLevel = node.level + 1;
             Item nextItem = sorted[node.level];
 
+            // In DFS, we push 'exclude' then 'include' so that 'include' is popped first.
+            
+            // Right branch (Exclude)
+            double excludeBound = fractionalBound(nextLevel, node.value, node.weight, sorted, capacity, n, prefixWeight, prefixValue);
+            if (Math.floor(excludeBound) > bestValue && nodesExplored < MAX_NODES) {
+                stack.push(new Node(nextLevel, node.value, node.weight, excludeBound));
+                if (stats != null) { stats.recordRightBranch(); stats.recordGenerated(); }
+            } else if (stats != null) {
+                stats.recordSkippedRightBound();
+            }
+            
+            // Left branch (Include)
             int includeWeight = node.weight + nextItem.getWeight();
             int includeValue = node.value + nextItem.getValue();
             if (includeWeight <= capacity && includeValue > bestValue) {
@@ -122,10 +123,11 @@ public final class BranchAndBound implements Algorithm {
                 bestValue = includeValue;
                 if (stats != null) stats.recordImprovement(nextLevel, oldBest, bestValue);
             }
+            
             if (includeWeight <= capacity) {
                 double bound = fractionalBound(nextLevel, includeValue, includeWeight, sorted, capacity, n, prefixWeight, prefixValue);
                 if (Math.floor(bound) > bestValue && nodesExplored < MAX_NODES) {
-                    pq.add(new Node(nextLevel, includeValue, includeWeight, bound));
+                    stack.push(new Node(nextLevel, includeValue, includeWeight, bound));
                     if (stats != null) { stats.recordLeftBranch(); stats.recordGenerated(); }
                 } else if (stats != null) {
                     stats.recordSkippedLeftBound();
@@ -134,16 +136,8 @@ public final class BranchAndBound implements Algorithm {
                 stats.recordSkippedLeftInfeasible();
             }
 
-            double excludeBound = fractionalBound(nextLevel, node.value, node.weight, sorted, capacity, n, prefixWeight, prefixValue);
-            if (Math.floor(excludeBound) > bestValue && nodesExplored < MAX_NODES) {
-                pq.add(new Node(nextLevel, node.value, node.weight, excludeBound));
-                if (stats != null) { stats.recordRightBranch(); stats.recordGenerated(); }
-            } else if (stats != null) {
-                stats.recordSkippedRightBound();
-            }
-
-            if (pq.size() > maxQueueSize) {
-                maxQueueSize = pq.size();
+            if (stack.size() > maxQueueSize) {
+                maxQueueSize = stack.size();
             }
         }
 

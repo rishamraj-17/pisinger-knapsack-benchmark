@@ -119,3 +119,22 @@ def precision_recall_f1(
         "recall": recall,
         "f1": f1,
     }
+
+def medae(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    return float(np.median(np.abs(y_true - y_pred)))
+
+def log_mae(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    return float(np.mean(np.abs(np.log(np.maximum(y_true, 1e-9)) - np.log(np.maximum(y_pred, 1e-9)))))
+
+def pct_within_2x(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    ratio = np.maximum(y_pred, 1e-9) / np.maximum(y_true, 1e-9)
+    return float(np.mean((ratio >= 0.5) & (ratio <= 2.0)))
+
+def compute_regression_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
+    return {
+        "rmse": rmse(y_true, y_pred),
+        "mae": mae(y_true, y_pred),
+        "medae": medae(y_true, y_pred),
+        "log_mae": log_mae(y_true, y_pred),
+        "pct_within_2x": pct_within_2x(y_true, y_pred),
+    }

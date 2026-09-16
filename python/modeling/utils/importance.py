@@ -301,26 +301,22 @@ def _r2_full_sample(
     return _score(y, y_pred, metric)
 
 
-def delta_r2_partitioning(
+def drop_column_importance(
     X_m2: pd.DataFrame,
     y: np.ndarray,
-    top_k_predictors: List[str],
     model_family: str,
     r2_full: float,
+    top_k_predictors: Optional[List[str]] = None,
 ) -> pd.DataFrame:
     """
-    For each execution metric in top_k_predictors (top-10 by permutation importance):
-      - Fit M2 without that metric
-      - delta_r2 = r2_full - R2(M2_without_m)
-
-    Source: PHASE_3_2_DESIGN.md §10.4 lines 526–532
-    'Δ-R² partitioning is restricted to the top-10 metrics identified by
-    permutation importance'
-
-    Metric: same as model's primary evaluation metric (blueprint Conflict #3 resolution).
+    Compute drop-column importance (Delta R^2).
+    If top_k_predictors is provided, it only computes it for those.
+    Otherwise, it computes it for all columns.
     """
     rows = []
-    for rank, pred_name in enumerate(top_k_predictors, start=1):
+    cols_to_drop = top_k_predictors if top_k_predictors is not None else X_m2.columns
+    
+    for rank, pred_name in enumerate(cols_to_drop, start=1):
         if pred_name not in X_m2.columns:
             continue
         X_reduced = X_m2.drop(columns=[pred_name])
@@ -331,11 +327,45 @@ def delta_r2_partitioning(
             "r2_full": r2_full,
             "r2_without": r2_reduced,
             "delta_r2": delta,
-            "rank_by_perm_importance": rank,
+            "rank_by_perm_importance": rank if top_k_predictors is not None else None,
         })
 
     result = pd.DataFrame(rows)
-    result = result.sort_values("delta_r2", ascending=False).reset_index(drop=True)
+    if not result.empty:
+        result = result.sort_values("delta_r2", ascending=False).reset_index(drop=True)
+    return result
+
+def grouped_ablation_importance(
+    X_m2: pd.DataFrame,
+    y: np.ndarray,
+    model_family: str,
+    r2_full: float,
+    feature_groups: Dict[str, List[str]],
+) -> pd.DataFrame:
+    """
+    Compute Delta R^2 for dropping predefined groups of features.
+    """
+    rows = []
+    for group_name, cols in feature_groups.items():
+        # Only drop columns that actually exist in X_m2
+        cols_in_x = [c for c in cols if c in X_m2.columns]
+        if not cols_in_x:
+            continue
+            
+        X_reduced = X_m2.drop(columns=cols_in_x)
+        r2_reduced = _r2_full_sample(X_reduced, y, model_family)
+        delta = r2_full - r2_reduced
+        rows.append({
+            "feature_group": group_name,
+            "r2_full": r2_full,
+            "r2_without": r2_reduced,
+            "delta_r2": delta,
+            "n_features_dropped": len(cols_in_x),
+        })
+
+    result = pd.DataFrame(rows)
+    if not result.empty:
+        result = result.sort_values("delta_r2", ascending=False).reset_index(drop=True)
     return result
 
 
