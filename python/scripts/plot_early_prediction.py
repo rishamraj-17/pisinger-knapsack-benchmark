@@ -47,13 +47,13 @@ def compute_r2_at_fraction(snap_df: pd.DataFrame, inst_df: pd.DataFrame,
     """Fit Ridge regression on static + exec cols at given fraction, 5-fold CV R²."""
     sub = snap_df[snap_df["snapshot_fraction"] == fraction].copy()
     # merge with full target (log_nodes_explored at fraction=1.0)
-    full = snap_df[snap_df["snapshot_fraction"] == 1.0][["instance_id", "nodes_explored"]].copy()
+    full = snap_df[snap_df["snapshot_fraction"] == 1.0][["instance_id", "capacity_mode", "nodes_explored"]].copy()
     full = full.rename(columns={"nodes_explored": "total_nodes"})
-    sub = sub.merge(full, on="instance_id")
+    sub = sub.merge(full, on=["instance_id", "capacity_mode"])
     sub["log_nodes_explored"] = np.log1p(sub["total_nodes"])
 
     # merge static features
-    sub = sub.merge(inst_df[["instance_id"] + static_features], on="instance_id", how="left")
+    sub = sub.merge(inst_df[["instance_id", "capacity_mode"] + static_features], on=["instance_id", "capacity_mode"], how="left")
 
     avail_exec = [c for c in EXEC_COLS if c in sub.columns]
     avail_static = [c for c in static_features if c in sub.columns]
@@ -64,11 +64,12 @@ def compute_r2_at_fraction(snap_df: pd.DataFrame, inst_df: pd.DataFrame,
     y = sub["log_nodes_explored"].values
 
     from sklearn.model_selection import cross_val_score
-    scaler_s = StandardScaler()
-    scaler_c = StandardScaler()
+    from sklearn.ensemble import RandomForestRegressor
 
-    r2_m1 = np.mean(cross_val_score(Ridge(alpha=1.0), scaler_s.fit_transform(X_static), y, cv=5, scoring="r2"))
-    r2_m2 = np.mean(cross_val_score(Ridge(alpha=1.0), scaler_c.fit_transform(X_combined), y, cv=5, scoring="r2"))
+    rf = RandomForestRegressor(n_estimators=50, random_state=42, n_jobs=-1)
+    
+    r2_m1 = np.mean(cross_val_score(rf, X_static, y, cv=5, scoring="r2"))
+    r2_m2 = np.mean(cross_val_score(rf, X_combined, y, cv=5, scoring="r2"))
 
     return {"fraction": fraction, "r2_m1": r2_m1, "r2_m2": r2_m2, "delta_r2": r2_m2 - r2_m1}
 
@@ -78,7 +79,7 @@ def main():
     print("Phase 3: Early Prediction Curve")
     print("=" * 60)
 
-    snap_path = DATA_DIR / "bb_snapshots.csv"
+    snap_path = DATA_DIR / "bb_snapshots_clean.csv"
     inst_path = DATA_DIR / "instances.csv"
 
     if not snap_path.exists():
