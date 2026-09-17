@@ -1,13 +1,12 @@
-# Predictive Value of Execution Metrics in the 0/1 Knapsack Problem
+# From Static Features to Live Trajectory: Predictive Information Accumulation and Generalization Boundaries in Knapsack Solvers
 
-> An empirical study separating **static instance features** from **dynamic internal execution metrics** when modelling algorithm performance across five Pisinger structural families.
+> An empirical study separating **static instance features** from **dynamic execution metrics** to predict algorithm performance across five Pisinger structural families, demonstrating severe generalization boundaries and rapid online information accumulation.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-17%2B-orange.svg)](https://openjdk.org/)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://python.org)
-[![Reproducible](https://img.shields.io/badge/Reproducibility-Full-green.svg)](reproduce.sh)
 
-**Key finding:** Models that appear near-perfect in-sample ($R^2 \approx 0.98$) collapse to worse-than-random ($R^2 < 0$) when evaluated out-of-distribution via Leave-One-Family-Out (LOFO) cross-validation — exposing a severe structural generalization boundary in algorithm performance prediction.
+**Key finding:** Models trained to predict Branch & Bound complexity appear near-perfect in-sample ($R^2 \approx 0.98$) but collapse out-of-distribution via Leave-One-Family-Out (LOFO) evaluation. However, observing just the first 1% of the search tree execution dramatically rescues predictive performance, enabling near-perfect online difficulty prediction.
 
 ---
 
@@ -15,8 +14,6 @@
 
 - [Overview](#overview)
 - [Repository Structure](#repository-structure)
-- [Quick Start](#quick-start)
-- [Prerequisites](#prerequisites)
 - [Reproducing the Paper](#reproducing-the-paper)
 - [Features & Tech Stack](#features--tech-stack)
 - [Citation](#citation)
@@ -28,14 +25,12 @@
 
 This repository contains the full reproducible pipeline for the paper:
 
-> **"The Predictive Value of Internal Execution Metrics in the 0/1 Knapsack Problem"**  
+> **"From Static Features to Live Trajectory: Predictive Information Accumulation and Generalization Boundaries in Knapsack Solvers"**  
 > Byahut et al. · Kathmandu University · 2026
 
 The study benchmarks three classical 0/1 knapsack algorithms — **Greedy**, **Dynamic Programming**, and **Branch & Bound** — across 6,000 instances from five Pisinger structural families. The core research question is:
 
-*Do internal execution metrics (e.g., bound-gap variance, node counts) explain algorithm performance beyond what static instance features alone can predict?*
-
-**Short answer:** For Branch & Bound, yes — substantially ($\Delta R^2_{adj} \geq 0.217$). But these gains vanish completely under out-of-distribution evaluation, revealing that the generalization boundary, not the in-sample fit, is the paper's central empirical finding.
+*How does predictive information about algorithmic difficulty accumulate as a solver executes, and can internal execution metrics rescue models from severe structural generalization boundaries?*
 
 ---
 
@@ -43,129 +38,87 @@ The study benchmarks three classical 0/1 knapsack algorithms — **Greedy**, **D
 
 ```
 .
-├── src/                   # Java benchmark — instance generators and algorithm solvers
+├── src/                   # Java benchmark — instance generators and solvers
 │   └── main/java/
-│       ├── algorithms/    # Greedy, DP, BranchAndBound (instrumented)
-│       ├── benchmark/     # Experiment runners and CSV exporters
-│       ├── dataset/       # Pisinger instance family generators
-│       └── model/         # KnapsackInstance, Item, Result
+│       ├── algorithms/    # Greedy, DP, BranchAndBound (instrumented for early prediction)
+│       ├── benchmark/     # Runners (BbInstrumentationRunner, BbSnapshotRunner, etc.)
+│       └── dataset/       # Pisinger instance family generators
 │
-├── data/                  # Experiment data (generated, not tracked in Git)
-│   ├── raw/               # Canonical CSVs: full_experiment.csv, fixed_experiment.csv, scaled_experiment.csv
-│   └── instrumentation/   # Per-algorithm execution traces (bb, dp, greedy)
+├── data/                  # Experiment data (generated)
+│   └── instrumentation/   # CSV traces (instances.csv, bb_instrumentation.csv, bb_snapshots.csv)
 │
 ├── python/                # Python analysis pipeline
-│   ├── scripts/           # EDA, figure generation, regression table builder
-│   └── modeling/          # Statistical modeling (OLS, Fractional Logit, Elastic-Net)
-│       ├── scripts/       # Numbered pipeline: 1_prepare → 2a/b/c/d_fit → 3_importance → 4_diagnostics
-│       └── utils/         # Shared modules: models, cv, preprocessing, diagnostics
+│   ├── scripts/           # Standalone analysis scripts (PCA, early prediction, portfolio simulation)
+│   └── modeling/          # Statistical modeling pipeline
+│       ├── scripts/       # 1_prepare_data, 2_fit_models, 3_compute_importance
+│       └── utils/         # Random Forest, Gradient Boosting, OLS (HC3 standard errors)
 │
-├── outputs/               # Generated figures and LaTeX tables (not tracked in Git)
-│   ├── figures/           # Publication-quality PDF/PNG/SVG plots
+├── results/               # Generated figures and LaTeX tables
+│   ├── revision-2/        # New plots for early prediction, generalization PCA, and portfolio regret
 │   └── tables/            # Auto-generated .tex tables (input by manuscript)
 │
 ├── manuscript/            # Paper
 │   ├── main.tex           # LaTeX source
-│   ├── main.pdf           # Compiled PDF
 │   └── references.bib     # Bibliography
 │
-├── docs/guides/           # Human-readable guides
-│   ├── reproduction_pipeline.md   # Full provenance chain
-│   ├── professors_guide.md        # High-level science guide
-│   └── dataset_features.md        # Feature dictionary
-│
-├── reproduce.sh           # One-command full reproduction pipeline
-└── build_and_run.sh       # Java build and experiment runner
-```
-
-> **Generated** directories (`data/`, `outputs/`) are excluded from Git. They are fully regenerated by `reproduce.sh`.
-
----
-
-## Quick Start
-
-```bash
-# Clone the repository
-git clone https://github.com/rishamraj-17/pisinger-knapsack-benchmark.git
-cd pisinger-knapsack-benchmark
-
-# Full reproduction: builds Java, runs 18,000 algorithm trials,
-# generates all tables, figures, and recompiles the PDF
-./reproduce.sh
-```
-
-For a fast smoke-test (~10 seconds):
-
-```bash
-# Small run: 2 instance sizes, 5 seeds each
-./build_and_run.sh 20,50 1000 5 42
-
-# Then generate analysis outputs
-python/venv/bin/python python/scripts/analyze.py data/raw/full_experiment.csv
-```
-
----
-
-## Prerequisites
-
-| Requirement | Version | Purpose |
-|-------------|---------|---------|
-| Java (OpenJDK) | 17+ | Benchmark execution |
-| Python | 3.8+ | Analysis and modeling |
-| NumPy, Matplotlib | latest | Figures and EDA |
-| statsmodels, scikit-learn | latest | Statistical modeling (Phase 3) |
-
-Install Python dependencies:
-
-```bash
-# The reproduce.sh script uses the pre-configured venv at python/venv/
-# To install manually:
-python3 -m venv python/venv
-source python/venv/bin/activate
-pip install numpy matplotlib pandas statsmodels scikit-learn scipy
+└── docs/guides/           # Human-readable guides
+    └── dataset_features.md# 500+ line dictionary defining every statistical feature
 ```
 
 ---
 
 ## Reproducing the Paper
 
-The pipeline runs in six ordered steps via `reproduce.sh`:
+The pipeline runs in three ordered phases.
 
-| Step | What it does |
-|------|-------------|
-| 0 | Cleans stale outputs |
-| 1 | Fixed-capacity Java benchmark (`W = 1000`, 6 sizes × 100 seeds) |
-| 2 | Scaled-capacity Java benchmark (`W = 0.5 × Σwᵢ`) |
-| 3 | Combines fixed + scaled CSVs into `data/raw/full_experiment.csv` |
-| 4 | EDA: generates all figures and summary tables into `outputs/` |
-| 5 | Regression tables: reads `python/modeling/output/results/*.csv` → `outputs/tables/*.tex` |
-| 6 | Recompiles `manuscript/main.tex` → `manuscript/main.pdf` via Tectonic |
+### Phase 1: Data Generation (Java)
+Run the instrumented solvers to generate the base dataset and execution snapshots (1%, 5%, 10%, 25%, 50%, 100%).
+```bash
+./build_and_run.sh
+# Note: You can run specific runners manually, e.g.,
+# java -cp "target/classes:lib/commons-csv-1.10.0.jar" benchmark.BbSnapshotRunner
+```
 
-Every numerical value in the paper traces directly from `data/raw/full_experiment.csv` through the pipeline. No statistics are hand-edited.
+### Phase 2: Statistical Modeling (Python)
+Fit OLS (with robust standard errors) and Random Forest models using a strict hierarchical cross-validation protocol, including Leave-One-Family-Out (LOFO) evaluation.
+```bash
+python3 python/modeling/scripts/1_prepare_data.py
+python3 python/modeling/scripts/2_fit_models.py
+python3 python/modeling/scripts/3_compute_importance.py
+```
 
-See [`docs/guides/reproduction_pipeline.md`](docs/guides/reproduction_pipeline.md) for the complete provenance chain and parameter reference.
+### Phase 3: Final Analysis & Plots (Python)
+Generate the figures supporting the core reframing: algorithmic portfolio simulation, generalization space PCA, and early prediction information accumulation curves.
+```bash
+python3 python/scripts/simulate_algorithm_selection.py
+python3 python/scripts/plot_generalization_space.py
+python3 python/scripts/plot_early_prediction.py
+```
+
+### Phase 4: Compilation (LaTeX)
+Recompile the manuscript to include the new tables and figures.
+```bash
+cd manuscript && tectonic main.tex
+```
 
 ---
 
 ## Features & Tech Stack
 
 **Research Pipeline**
-- Instrumented Java solvers capturing 24+ internal execution metrics per B&B run
-- Five Pisinger structural families with strict parametric control (seed 42)
-- Three-tier evaluation: full-sample · 5-fold CV · Leave-One-Family-Out (LOFO)
-- OLS, Fractional Logit, and Elastic-Net models with VIF-thinned predictors
-- Paired bootstrap confidence intervals for out-of-distribution $\Delta R^2$
+- Deep instrumentation of Java solvers capturing internal execution snapshots at 1%, 5%, 10%, 25%, and 50% of the search tree size.
+- Formal Breusch-Pagan tests for heteroskedasticity leading to HC3 robust standard error usage.
+- Strict evaluation ladders: Random CV vs. Leave-One-Family-Out (LOFO) CV.
+- Tree-based predictive models (Random Forest) to handle highly non-linear feature interactions without catastrophic outlier failure.
 
 **Tech Stack**
-
 | Layer | Technology |
 |-------|-----------|
 | Benchmark | Java 17, Apache Commons CSV |
-| Analysis | Python 3, pandas, NumPy, SciPy |
-| Modeling | statsmodels (OLS, GLM), scikit-learn (Elastic-Net) |
+| Analysis | Python 3, pandas, NumPy, scikit-learn |
+| Modeling | statsmodels (OLS with HC3), scikit-learn (RandomForest) |
 | Figures | Matplotlib (PDF + PNG + SVG) |
 | Manuscript | LaTeX (ACM `sigconf`), Tectonic compiler |
-| Build | Maven (optional), `build_and_run.sh` (standalone) |
 
 ---
 
@@ -175,15 +128,13 @@ See [`docs/guides/reproduction_pipeline.md`](docs/guides/reproduction_pipeline.m
 @article{byahut2026knapsack,
   author    = {Byahut, Risham Raj and Neupane, Saimon and Sen, Parikchit
                and Sharma, Keshav and Sharma, Prabesh},
-  title     = {The Predictive Value of Internal Execution Metrics
-               in the 0/1 Knapsack Problem},
+  title     = {From Static Features to Live Trajectory: Predictive Information
+               Accumulation and Generalization Boundaries in Knapsack Solvers},
   year      = {2026},
   institution = {Kathmandu University},
   url       = {https://github.com/rishamraj-17/pisinger-knapsack-benchmark}
 }
 ```
-
-See [`CITATION.cff`](CITATION.cff) for machine-readable metadata.
 
 ---
 

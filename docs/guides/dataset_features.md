@@ -1,11 +1,11 @@
 # Instance Feature Specification
 
-## Canonical reference for `results/instances.csv`
+## Canonical reference for `data/instrumentation/instances.csv`
 
 **Dataset Version:** 1.0
 **Phase:** 2.1
 **Status:** Frozen
-**File:** `results/instances.csv`
+**File:** `data/instrumentation/instances.csv`
 **Rows:** 6,000
 **Feature columns:** 36
 **Identifier columns:** 4
@@ -486,7 +486,7 @@ Four columns identify each row uniquely in the dataset. The composite key `(inst
 
 ### Phase 2.1 contains ONLY predictor variables.
 
-This dataset (`results/instances.csv`) is exclusively composed of instance-level
+This dataset (`data/instrumentation/instances.csv`) is exclusively composed of instance-level
 descriptive features. No algorithm execution statistics are included:
 
 - No runtimes
@@ -508,7 +508,7 @@ metrics serve as responses (Y). Keeping them separate ensures:
 4. **Causal interpretability:** Effects in downstream models can be attributed to instance structure, not to interactions with the experimental setup.
 
 Algorithm outputs will first appear during Phase 2.5 when the rich analysis
-dataset is assembled by joining `results/instances.csv` with benchmark execution
+dataset is assembled by joining `data/instrumentation/instances.csv` with benchmark execution
 records on the composite key `(instance_id, capacity_mode)`.
 
 ---
@@ -516,7 +516,7 @@ records on the composite key `(instance_id, capacity_mode)`.
 ## Join Key Documentation
 
 The composite key `(instance_id, capacity_mode)` uniquely identifies every row
-in `results/instances.csv` and serves as the stable join key for merging with
+in `data/instrumentation/instances.csv` and serves as the stable join key for merging with
 future datasets.
 
 | Key Component | Type | Values | Description |
@@ -527,7 +527,7 @@ future datasets.
 **Properties:**
 
 - **Uniqueness:** Every combination of `(instance_id, capacity_mode)` appears
-  exactly once in `results/instances.csv` (verified: 0 duplicate pairs in 6,000 rows).
+  exactly once in `data/instrumentation/instances.csv` (verified: 0 duplicate pairs in 6,000 rows).
 - **Stability:** The key is determined by the instance generation process and does
   not depend on algorithm execution. It will remain stable across future phases.
 - **Completeness:** Every instance (0–2999) appears under both `fixed` and `scaled`
